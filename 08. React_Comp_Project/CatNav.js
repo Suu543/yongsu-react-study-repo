@@ -1,0 +1,1 @@
+// function vs class version
