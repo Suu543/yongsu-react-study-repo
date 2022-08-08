@@ -23,6 +23,7 @@ class CardSet extends Component {
         chosenCards: copyRemoveOfCards,
       });
     } else {
+      // Bad Practice
       // this.state.chosenCards.push(this.props.cards[index]);
       const copyOfCards = [...this.state.chosenCards];
       copyOfCards.push(this.props.cards[index]);
