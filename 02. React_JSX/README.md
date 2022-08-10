@@ -163,9 +163,12 @@ ReactDOM.render(markup, document.getElementById("root"));
 ```
 
 1. 처음에는 `where to render`에 정의한 `DOM` 요소에 렌더링을 합니다.
+   
 2. 이후 `virtualDOM`에 현재 렌러딩된 `DOM`의 복제(replica)를 하나 생성합니다.
 <img src="https://cdn-images-1.medium.com/max/800/1*Vh0hZeByYj923GXHWCXPCA.png" />
+
 3. 이후 값의 비교는 `DOM`을 이용해 `HTML`에 직접 접근해 비교하는 방식이 아닌, `plain javascript`를 활용해 객체 간의 비교로 변경된 지점을 추적합니다. (cheap and small)
+   
 4. 화면에 변경이 발생하면, 이전의 `VirtualDOM`과 현재 `DOM`을 `plain javascript`를 통해 비교하고, 전체를 다시 렌더링하는 것이 아닌, 객체 간의 비교를 통해 필요한 부분에만 변경 사항을 반영합니다. <br />
 기존의 `DOM`은 변경이 발생하면 전체 요소를 렌더링하는 반면에, `React`는 객체 간의 비교로 필요한 부분만 업데이트한다는 점에서 굉장히 빠른 속도로 변화를 반영할 수 있습니다.
 <img src="https://cdn-images-1.medium.com/max/1000/1*J8gTVVd1Mf6L0Dqg0NbNkQ.png" />
