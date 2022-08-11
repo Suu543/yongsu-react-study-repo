@@ -64,7 +64,7 @@ export default App;
 
 ```javascript
 // After
- import React, { Component } from "react";
+import React, { Component } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 
