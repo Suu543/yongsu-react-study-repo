@@ -538,18 +538,1490 @@ console.log(updated);
 
 ## Redux and React
 
+<img src="https://cdn-images-1.medium.com/max/800/1*-fWEe25VRjO-esU3XAh6XA.png" />
+
+```javascript
+npx create-react-app redux101
+```
+
+`redux`와 `react`는 서로의 존재를 알지 못합니다. 그러므로 둘 사이를 연결할 중재자가 필요합니다. `react-redux` 모듈이 바로 이 중재자 역할을 해줍니다.
+`react-redux`에는 대표적으로 두 개의 요소가 존재합니다.
+
+- Provider
+- Connect
+
+좌측 아래의 그림을 중앙 저장소(store)로 , 우측 아래 그림을 리엑트 앱으로 간주하겠습니다.
+이 시나리오의 목표는 리엑트 컴포넌트가 좌측에 있는 중앙 저장소(store)와 의사소통할 수 있게 하는 것을 의미합니다.
+이 목표를 달성하는 과정에 `Provider` 컴포넌트를 활용할 수 있습니다.
+`Provider` 컴포넌트는 두 가지 역할을 합니다.
+
+1. 중앙 저장소(store)에 접근할 수 있습니다.
+2. `Provider` 컴포넌트는 리엑트 앱을 감싸줌으로써 부모 역할을 할 수 있습니다.
+
+이 개념을 잘 숙지한 체로 계속해서 `redux` 학습을 진행해보겠습니다.
+
 ## How Redux Works
+
+<img src="https://d33wubrfki0l68.cloudfront.net/01cc198232551a7e180f4e9e327b5ab22d9d14e7/b33f4/assets/images/reduxdataflowdiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif" />
+
+`redux`는 해당 영상에 나오는 것을 포함해 크게 4가지로 구성됩니다.
+
+1. Store (직접 정의)
+2. Action Creators (직접 정의)
+3. Actions (직접 정의)
+4. Dispatch (Redux 제공)
+5. Reducer (직접 정의)
+
+`redux` 저장소에 저장된 데이터를 직접 변경하는 것은 불가능합니다. 그러므로 `redux`는 다음 순서로 동작하게 됩니다.
+
+1. **Store**: `Store (중앙 저장소)`에서 최초 정의한 상태 값을 리턴합니다.
+2. **Action Creators**: 리턴 받은 상태값 변경이 되는 시나리오를 분류해 `Action Creators`를 정의합니다.
+3. **Actions** `Action Creators`는 변경할 상태값 상태를 의미하는 `type`과, 변경할 상태값 데이터를 의미하는 `payload`가 담긴 `Action` 객체를 리턴합니다.
+4. **Dispatch**: 리턴된 `Action` 객체는 `Redux`에서 제공하는 `Dispatch` 함수를 통해 `Store (중앙 저장소)`로 전달됩니다.
+5. **Reducer**: 사전에 정의해 둔 `Reducers` 함수 중 전달받은 `Action` 객체를 처리할 수 있는 로직이 있는 경우 전달받은 `Payload`를 저장소에 반영합니다. 그렇지 않은 경우라도 `Dispatch` 함수가 호출된 기록은 남깁니다.
+
+## Redux Architecture
+
+<img src="https://camo.githubusercontent.com/f78fe6a64eb1093a929c369973cb0a133f1672b932da58aefc1b4cdbc6c7a65f/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f313230302f312a2d3257694544796e4238793531396f644258767332672e706e67" />
+
+`Redux`는 앱의 상태 값을 객체 형태로 `중앙 저장소(Store)`에 저장합니다. 대신 `Rdux`는 저장된 데이터가 카테고리, 쇼핑카트, 유저 정보 인지 등의 구분 없이, `arrays, object, numbers, boolean` 등의 데이터 타입 중 하나라고 인식합니다.
+
+```javascript
+{
+    categories: [],
+    products: [],
+    cart: {},
+    user: {}
+}
+```
+
+`Redux`는 `함수형 프로그래밍(Functional Programming)` 원칙에 기반을 두고 작성되었기 때문에, 저장소 내의 값에 대한 변경이 불가능합니다. 이러한 특징을 `불변성(Immutability)`이라 칭합니다. 이러한 특정 때문에 `reducer` 함수 호출을 통해서만 저장소 값을 변경(갱신)할 수 있습니다. 갱신하는 과정은 다음과 같습니다.
+
+저장소를 복사하고 갱신하는 과정에는 두 가지 방식을 사용할 수 있습니다.
+
+1. `Spread Operator`
+2. `Immer.js`
+
+```javascript
+const store = { name: "yongsu" };
+
+function reducer(store) {
+  const updated = { ...store };
+}
+```
+
+정의된 `reducer` 함수를 보면 저장소를 받는 인자가 하나만 존재하는 것을 확인할 수 있습니다. 이 말은 다음과 같은 디테일한 갱신은 불가능한 상황임을 알 수 있습니다.
+
+- 쇼핑카트를 갱신
+- 카테고리를 갱신
+
+디테일한 갱신을 위해서는 이 정보를 명시해주는 `action` 이라는 두 번째 인자가 필요합니다.
+
+```javascript
+function reducer(store, action) {}
+```
+
+전달받은 `action`인자에 정의된 데이터에 적합한 `reducer`가 정의되어 있는 경우, 해당 `reducer`를 호출해 저장소를 갱신하는 방식으로 동작합니다.
+
+`reducer`가 하나밖에 정의되지 않았는데 어떻게 여러 종류의 `action`을 처리할 수 있는가 의문이 들 수 있습니다. `Redux`는 둘 이상의 `reducer`를 정의할 수 있습니다. 이를 비유하자면 다수의 부서가 존재하는 조직을 생각해보겠습니다. 각 팀은 팀장이 있고, 이 팀장은 자기가 속한 팀에 책임을 지지, 다른 팀이 하는 행동에는 책임을 지지 않습니다. 이처럼 다음 코드와 같이 네 가지 종류의 데이터가 존재할 때, 각각의 데이터를 처리하는 `reducer`가 존재하게 됩니다.
+
+```javascript
+{
+    categories: [],
+    products: [],
+    cart: {},
+    user: {}
+}
+```
+
+<img src="https://cdn-images-1.medium.com/max/800/1*_-zwNkG2QNNNB_y6Sd7U-A.png" />
+
+`redux`를 요약해보자면 `Action`은 클릭과 같은 이벤트라 생각할 수 있고, 해당 이벤트가 발생하면 이를 `store`에 전달하는 게 `dispatch` 함수의 역할이고, 이후 전달받은 이벤트를 처리하고, 그 결과를 `store`에 반영하는 역할을 하는 것이 `reducer` 함수의 역할입니다. (`reducer` 함수를 `store`를 거치지 않고 바로 호출할 수 없음을 주의해야 합니다.)
+
+<img src="https://cdn-images-1.medium.com/max/800/1*iBPBxTxRjSKZzZrpK33MaA.png" />
+`Dispatch` 함수는 `Redux Store`로 출입하는 입구의 역할이라 할 수 있습니다. 모든 `Action`은 같은 입구를 통해 저장소에 접근하기 때문에, 빈틈없이 모든 요청을 기록할 수 있습니다. 식당에서 음식을 주문하는 순서를 생각하면 이해에 도움이 될 수 있습니다. <br />
+
+`손님 ==> 직원 ==> 포스기 ==> 요리사`
+
+`손님 ==> 직원`의 단계까지가 `Action or Event` 단계입니다.
+만약 이후 포스기를 사용하지 않고 직원이 요리사에게 바로 주문을 전달하게 되면 두 가지 문제가 발생합니다.
+
+1. 기록 없이 말로 전달했기 때문에 직원의 주문이 틀릴 가능성이 있습니다.
+2. 기록 없이 말로 전달했기 때문에 직원과 요리사 모두 주문 내용을 기억하지 못하는 경우 요리에 문제가 생길 수 있습니다.
+
+이러한 상황을 방지하기 위해 포스기를 설치하게 되면 직원과 요리사 사이 정확한 의사소통을 보장할 수 있습니다.
+이러한 포스기의 역할이 바로 `Redux`의 `Dispatch` 함수의 역할이라 생각할 수 있습니다.
+
+### First Redux App
+
+`redux` 다음 순서로 구성됩니다.
+
+1. `저장소(store)` 정의
+2. `이벤트(actions)` 정의
+3. `이벤트 핸들러(reducer)` 정의
+4. `저장소(store)` 초기화
+5. `이벤트 전송 (dispatching actions)` 정의
+6. `재사용 가능한 이벤트 (actions)` 정의
+
+```javascript
+npm install redux
+```
+
+1. `저장소(store)` 정의:
+
+`저장소(store)`를 정의하는 방식은 많지만, 일반적으로 사용하는 방식은 다음과 같습니다.
+
+```javascript
+{
+    bugs: [
+	{
+        id: 1,
+        description: "",
+        resolved: false
+    	}
+    ],
+    currentUser: {}
+}
+```
+
+`저장소(store)`에는 `bugs`와 `currentUser` 두 종류의 속성값이 존재합니다. `Redux`에서는 이러한 속성값을 `slice`라 명칭 합니다. 현재 두 개의 `slice`가 존재하기 때문에 최소 두 개의 `reducer`가 필요함을 유추할 수 있습니다.
+
+2. `이벤트(actions)` 정의
+
+`Bug`는 크게 세 가지 경우의 수로 분류됩니다.
+
+1. `버그 추가(Add a Bug)`
+2. `버그 해결(Mark as Resolved)`
+3. `버그 삭제(Delete a Bug)`
+
+```javascript
+{
+  type: "ADD_BUG",
+  description: "..."
+}
+```
+
+위와 같이 `Action`을 정의할 수 있지만, `Redux`는 공식 문서에서는 `Action` 정의할 때 다음 규격을 따릅니다.
+
+1. type: `Action`의 이름
+2. payload: `Action` 설명 등의 세부 내용
+
+이 규격에 맞춰 다시 `Action`을 정의하면 다음과 같습니다.
+
+```javascript
+{
+  type: "bugAdded",
+  payload: {
+    description: "..."
+  }
+}
+
+{
+  type: "bugResolved",
+  payload: {
+    description: "..."
+  }
+}
+
+{
+  type: "bugRemoved",
+  payload: {
+    description: "..."
+  }
+}
+```
+
+3. `이벤트 핸들러(reducer)` 정의
+
+앞서 소개한 것 처럼 `reducer`는 두 개의 인자를 받습니다.
+
+1. `상태값(state)`
+2. `이벤트(action)`
+
+이 규칙에 맞춰 `reducer`를 정의하면 다음과 같습니다.
+
+```javascript
+let lastId = 0;
+
+// If 버전
+function reducer(state = [], action) {
+  if (action.type === "bugAdded") {
+    return [
+      ...state,
+      {
+        id: ++lastId,
+        description: action.payload.description,
+        resolved: false,
+      },
+    ];
+  } else if (action.type === "bugRemoved") {
+    return state.filter((bug) => bug.id !== action.payload.id);
+  }
+
+  return state;
+}
+
+// Switch 버전
+function reducer(state = [], action) {
+  switch (action.type) {
+    case "bugAdded":
+      return [
+        ...state,
+        {
+          id: ++lastId,
+          description: action.payload.description,
+          resolved: false,
+        },
+      ];
+    case "bugRemoved":
+      return state.filter((bug) => bug.id !== action.payload.id);
+    default:
+      return state;
+  }
+}
+```
+
+4. `저장소(store)` 초기화
+
+`redux` 모듈을 통해 `저장소(store)`를 생성해보겠습니다.
+
+```javascript
+import { createStore } from "redux";
+import reducer from "./reducer";
+
+// createStore is another higher order functon
+const store = createStore(reducer);
+
+export default store;
+```
+
+5. `이벤트 전송 (dispatching actions)` 정의
+
+이 단계에서는 정의한 `action`을 `redux`에서 제공하는 `dispatch` 함수를 통해 `저장소(store)`에 전달하는 단계입니다.
+
+`subscribe` 함수는 상태 값에 변경이 발생하면 (reducer 함수가 호출되면) 매번 호출되는 함수입니다. 해당 함수는 인자로 콜백을 받고, 해당 콜백을 호출하는 방식으로 동작합니다.
+
+```javascript
+import store from "./store";
+
+// redux에서 제공하는 현재 상태 값을 읽어오는 메소드입니다.
+store.subscribe(() => {
+  console.log(store.getState());
+});
+
+store.dispatch({
+  type: "bugAdded",
+  payload: {
+    description: "Bug1",
+  },
+});
+
+console.log(store.getState());
+
+store.dispatch({
+  type: "bugRemoved",
+  payload: {
+    id: 1,
+  },
+});
+
+console.log(store.getState());
+```
+
+6. `재사용 가능한 이벤트 (actions)` 정의
+
+코드를 작성함에 재사용성은 반드시 고려해야 할 사항입니다.
+내일 다음과 같이 이름 변경이 필요한 상황을 생각해보겠습니다.
+
+- Rename: `bugAdded` ==> `bugCreated`
+
+```javascript
+import store from "./store";
+
+store.dispatch({
+  type: "bugAdded",
+  payload: {
+    description: "Bug1",
+  },
+});
+
+console.log(store.getState());
+```
+
+이 경우 기존에 정의해둔 `store`, `reducer` 모두 변경해야 하는 상황이 발생합니다. 이런 상황에 대비해 `actionType` 파일을 따로 생성함으로써 보다 유지 보수하기 좋은 코드를 작성할 수 있습니다. 예시를 통해 알아보겠습니다.
+
+```javascript
+// dataTypes.js
+export const BUG_ADDED = "bugAdded";
+export const BUG_REMOVED = "bugRemoved";
+
+// reducer.js
+// import { BUG_ADDED, BUG_REMOVED } from "./actionTypes"; or
+import * as actions from "./actionTypes";
+
+let lastId = 0;
+
+// Switch Cases Usage Version
+export default function reducer(state = [], action) {
+  switch (actions.BUG_ADDED) {
+    case "bugAdded":
+      return [
+        ...state,
+        {
+          id: ++lastId,
+          description: action.payload.description,
+          resolved: false,
+        },
+      ];
+    case actions.BUG_REMOVED:
+      return state.filter((bug) => bug.id !== action.payload.id);
+    default:
+      return state;
+  }
+}
+
+// index.js
+import store from "./store";
+
+store.dispatch({
+  type: "bugAdded",
+  payload: {
+    description: "Bug1",
+  },
+});
+
+console.log(store.getState());
+```
+
+개선된 코드에도 여전히 한 가지 문제가 존재합니다.
+
+1. `action`을 여러 곳에 사용하는 경우 `state` 객체를 여러 번 작성해야 합니다.
+
+`action creator` 함수를 따로 생성해서 이 문제를 해결할 수 있습니다.
+
+```javascript
+// actions.js
+import * as actions from "./actionTypes";
+
+export const bugAdded = (description) => ({
+  type: actions.BUG_ADDED,
+  payload: {
+    description,
+  },
+});
+
+// index.js
+import store from "./store";
+import { bugAdded } from "./actions";
+
+store.dispatch(bugAdded("Bug1"));
+
+console.log(store.getState());
+```
+
+### bugResolved - Practice
+
+1. Store
+2. Action
+3. Action Creator
+4. Dispatch
+5. Reducer
+
+```javascript
+// 1. actionsTypes.js
+// BUG_RESOLVED 추가
+export const BUG_RESOLVED = "bugResolved";
+
+// 2. actions.js
+export const bugResolved = (id) => ({
+  type: actions.BUG_RESOLVED,
+  payload: {
+    id,
+  },
+});
+
+// 3. reducer.js
+import * as actions from "./actionTypes";
+
+let lastId = 0;
+
+export default function reducer(state = [], action) {
+  switch (actions.BUG_ADDED) {
+    case "bugAdded":
+      return [
+        ...state,
+        {
+          id: ++lastId,
+          description: action.payload.description,
+          resolved: false,
+        },
+      ];
+
+    case actions.BUG_REMOVED:
+      return state.filter((bug) => bug.id !== action.payload.id);
+
+    case actions.BUG_RESOLVED:
+      return state.map((bug) =>
+        bug.id !== action.payload.id ? bug : { ...bug, resolved: true }
+      );
+
+    default:
+      return state;
+  }
+}
+
+// index.js
+import store from "./store";
+import { bugAdded, bugResolved } from "./actions";
+
+store.dispatch(bugAdded("Bug1"));
+
+console.log(store.getState());
+
+store.dispatch(bugResolved(1));
+
+console.log(store.getState());
+```
 
 ## Wiring Up Redux
 
-## Connecting Redux and React
+```javascript
+npx create-react-app redux101
+npm install redux
+```
 
-## Adding More Reducers to our store
+```javascript
+// index.js
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+
+// 1. Redux와 React 연결을 위해 Provider 컴포넌트를 가져왔습니다.
+import { Provider } from "react-redux";
+
+// 2. Redux 저장소를 만들기 위해 createStore 함수를 가져왔습니다.
+import { createStore } from "redux";
+
+// 3. Reducer는 src/reducers 폴더 생성 ==> rootReducer.js 생성했습니다.
+
+// 4. 해당 파일에 reducer를 정의했습니다.
+import rootReducer from "./reducers/rootReducer";
+
+// 5. 생성한 reducers를 인자로 전달해 저장소를 생성했습니다.
+const theStore = createStore(rootReducer);
+
+// 6. Redux와 React가 연결될 수 있도록 Provider 컴포넌트로 App 컴포넌트를 감싸고, 생성한 store를 할당했습니다.
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <Provider store={theStore}>
+    <App />
+  </Provider>
+);
+```
+
+```javascript
+// src/reducers/rootReducer.js
+
+// rootReducer로서 모든 reducer를 관리하는 역할을 합니다.
+// rootReducer를 생성하기 위해서는 combineReducers라는 함수를 사용해야 합니다.
+import { combineReducers } from "redux";
+import frozenReducer from "./frozen";
+
+// 별도로 생성한 reducer를 combineReducers 함수의 인자로 알맞은 키값과 함께 전달하면 됩니다.
+const rootReducer = combineReducers({
+  frozen: frozenReducer,
+});
+
+export default rootReducer;
+
+// src/reducers/frozen.js
+// 모든 reducer는 두 개의 인자를 받습니다.
+// 1. 상태값(state)
+// 2. 이벤트(action)
+
+export default (state = [], action) => {
+  return state;
+};
+
+// function frozen(state = [], action) {
+//   return state;
+// }
+
+// export default frozen;
+```
+
+## Building Redux from Scratch
+
+`Redux`를 보다 더 자세히 이해하기 위해 `redux` 일부 기능을 직접 구현해보겠습니다.
+
+```javascript
+import store from "./store";
+import { bugAdded, bugResolved } from "./actions";
+
+console.log(store);
+// { dispatchL f, subscribe: f, getState: f, replaceReducer: f, Symbol(observable): f }
+// dispatch: f dispatch(action)
+// subscribe: f subscribe(listener)
+// getState: f getState()
+// replaceReducer: f replaceReducer(nextReducer)
+// Symbol(observable): f observable()
+// __proto__: Object
+
+store.dispatch(bugAdded("Bug 1"));
+store.dispatch(bugResolved(1));
+
+console.log(store.getState());
+```
+
+1. Private Properties
+
+```javascript
+// src/customStore.js
+function createStore() {
+  let state;
+
+  function getState() {
+    return state;
+  }
+
+  return {
+    getState,
+  };
+}
+
+export default createStore();
+
+// src/index.js
+import store from "./customStore";
+store.state = 1;
+
+console.log(store.getState());
+```
+
+2. Dispatching Actions
+
+```javascript
+// src/customStore.js
+import reducer from "./reducer";
+
+function createStore(reducer) {
+  let state;
+
+  function dispatch(action) {
+    state = reducer(state, action);
+  }
+
+  function getState() {
+    return state;
+  }
+
+  return {
+    dispatch,
+    getState,
+  };
+}
+
+export default createStore(reducer);
+
+// src/index.js
+import store from "./customStore";
+import * as actions from "./actions";
+
+store.dispatch(actions.bugAdded("Bug 1"));
+
+console.log(store.getState());
+```
+
+3. Subscribing to the Store
+
+```javascript
+// src/customStore.js
+import reducer from "./reducer";
+
+function createStore(reducer) {
+  let state;
+  let listeners = [];
+
+  function subscribe(listener) {
+    listeners.push(listener);
+  }
+
+  function dispatch(action) {
+    state = reducer(state, action);
+
+    for (let i = 0; i < listeners.length; i++) {
+      listeners[i]();
+    }
+  }
+
+  function getState() {
+    return state;
+  }
+
+  return {
+    subscribe,
+    dispatch,
+    getState,
+  };
+}
+
+export default createStore(reducer);
+
+// src/index.js
+import store from "./customStore";
+import * as actions from "./actions";
+
+store.subscribe(() => {
+  console.log("Store Changed!");
+});
+store.dispatch(actions.bugAdded("Bug 1"));
+
+console.log(store.getState());
+```
+
+## Debugging Redux Application
+
+1. `Redux DevTools` 설치
+
+- <a href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en">다운로드</a>
+- <a href="https://github.com/reduxjs/redux-devtools/tree/main/extension#installation">적용 방법</a>
+
+```javascript
+// src/store.js
+import { createStore } from "redux";
+import reducer from "./reducer";
+
+const store = createStore(
+  reducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+```
+
+## Connecting Redux and React + Adding an Action Creator and Action
+
+1. `reducers` 정의
+
+```javascript
+// src/reducers/frozenReducer.js
+// reducer is just a function
+// All reducers have 2 params:
+// 1. Current State, usually provide a default state
+// 2. Info that came from any action
+
+const seedData = [
+  {
+    food: "TV Dinners",
+    quantity: 10,
+  },
+
+  {
+    food: "Frozen Veggies",
+    quantity: 21,
+  },
+
+  {
+    food: "Frozen Pizzas",
+    quantity: 25,
+  },
+];
+
+export default (state = seedData, action) => {
+  return state;
+};
+
+// function frozen(state = [], action) {
+//   return state;
+// }
+
+// export default frozen;
+
+// ---------------------------------------------------------------
+// src/reducers/produceReducer.js
+// reducer is just a function
+// All reducers have 2 params:
+// 1. Current State, usually provide a default state
+// 2. Info that came from any action
+
+const seedData = [
+  {
+    food: "Lettuce",
+    quantity: 10,
+  },
+
+  {
+    food: "Turnips",
+    quantity: 21,
+  },
+
+  {
+    food: "Apples",
+    quantity: 25,
+  },
+];
+
+export default (state = seedData, action) => {
+  return state;
+};
+
+// function frozen(state = [], action) {
+//   return state;
+// }
+
+// export default frozen;
+
+
+// ---------------------------------------------------------------
+// src/reducers/meatReducer.js
+
+// reducer is just a function
+// All reducers have 2 params:
+// 1. Current State, usually provide a default state
+// 2. Info that came from any action
+
+const seedData = [
+  {
+    food: "Chicken Breast",
+    quantity: 10,
+  },
+
+  {
+    food: "Bacon",
+    quantity: 21,
+  },
+
+  {
+    food: "Mahi Mahi",
+    quantity: 25,
+  },
+
+  {
+    food: "Salmon",
+    quantity: 25,
+  },
+];
+
+export default (state = seedData, action) => {
+  return state;
+};
+
+// function frozen(state = [], action) {
+//   return state;
+// }
+
+// export default frozen;
+```
+
+2. `FrozenDept` 컴포넌트 정의
+
+```javascript
+import React, { Component } from "react";
+
+// We want this component to know about redux
+// to do that, we need some help... or some glue
+// the glue is react-redux! We need connect function!
+import { connect } from "react-redux";
+
+class FrozenDept extends Component {
+  render() {
+    console.log(this.props.meatData);
+    const frozenInventory = this.props.frozenData.map((item, i) => {
+      return (
+        <li key={i}>
+          {item.food} : {item.quantity}
+        </li>
+      );
+    });
+
+    // #3
+    // console.log(this.props.frozenData);
+    return (
+      <div>
+        <h1>The Frozen Food Department</h1>
+        <ul>{frozenInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+// mapStateToPROPS takes 1 args, "state" and that is the rootReducer/state
+// #1
+function mapStateToProps(state) {
+  // mapStateToProps returns an object, with:
+  // property is the local prop name to this component
+  // value will be the property in the root reducer... ie, a piece of the store
+  return {
+    frozenData: state.frozen,
+    produceData: state.produce,
+    meatData: state.meat,
+  };
+}
+
+// #2
+// Connect takes 2 args, the first one is a function that is going to map
+// a piece of redux state to this components props
+export default connect(mapStateToProps)(FrozenDept);
+```
+
+3. `App.js` 컴포넌트 수정
+
+```javascript
+import "./App.css";
+import FrozenDept from "./components/FrozenDept";
+
+function App() {
+  return (
+    <div className="App">
+      <FrozenDept />
+    </div>
+  );
+}
+
+export default App;
+```
+
+4. `index.js` 수정
+
+```javascript
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+
+// 1. In order to wire up a redux/react app, we need react-redux
+// 2. We need the Provider Component, to be around everything!
+import { Provider } from "react-redux";
+
+// 3. Create the redux store, so that redux exists, and the provider has a store
+import { createStore } from "redux";
+
+// 4. Reducers to populate the store
+// 4a. We always start with a rootReducer
+// src/reducers 폴더 생성 ==> rootReducer.js 생성
+
+// 5. Make individual reducers to hand to the rootReducer
+import rootReducer from "./reducers/rootReducer";
+
+// 6. Create the store by passing it the rootReducer, which is made up of the reducers
+const theStore = createStore(rootReducer);
+
+// Provider is the glue between react and redux, Give it the store!
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <Provider store={theStore}>
+    <App />
+  </Provider>
+);
+```
 
 ## Adding an action creator and action
 
-## Adding the Dispatcher
+```javascript
+// src/actions/frozenInvUpdate.js
+export default () => {
+  return {
+    type: "updateMeat",
+  };
+};
 
+// src/actions/meatInvUpdate.js
+export default () => {
+  return {
+    type: "updateFrozen",
+  };
+};
+
+// src/actions/produceInvUpdate.js
+export default () => {
+  console.log("Updating produce inventory!!!");
+  return {
+    type: "produceMeat",
+  };
+};
 ```
 
+```javascript
+// src/components/FrozenDept.js
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import updateFrozen from "../actions/frozenInvUpdate";
+
+class FrozenDept extends Component {
+  increment = (operation, index) => {
+    if (operation === "+") {
+      console.log(updateFrozen());
+    } else if (operation === "-") {
+    }
+  };
+
+  render() {
+    console.log(this.props.meatData);
+    const frozenInventory = this.props.frozenData.map((item, i) => {
+      return (
+        <div>
+          <li key={i}>
+            {item.food} : {item.quantity}
+          </li>
+          <input
+            type="button"
+            onClick={() => this.increment("+", i)}
+            value="+"
+          />
+          <input
+            type="button"
+            onClick={() => this.increment("-", i)}
+            value="-"
+          />
+        </div>
+      );
+    });
+
+    return (
+      <div>
+        <h1>The Frozen Food Department</h1>
+        <ul>{frozenInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+
+function mapStateToProps(state) {
+
+  return {
+    frozenData: state.frozen,
+  };
+}
+
+export default connect(mapStateToProps)(FrozenDept);
+
+// src/components/MeatDept.js
+import React, { Component } from "react";
+
+import { connect } from "react-redux";
+import updateMeat from "../actions/meatInvUpdate";
+
+class MeatDept extends Component {
+  increment = (operation, index) => {
+    if (operation === "+") {
+      console.log(updateMeat());
+    } else if (operation === "-") {
+    }
+  };
+
+  render() {
+    console.log(this.props.meatData);
+    const meatInventory = this.props.meatData.map((item, i) => {
+      return (
+        <div>
+          <li key={i}>
+            {item.food} : {item.quantity}
+          </li>
+          <input
+            type="button"
+            onClick={() => this.increment("+", i)}
+            value="+"
+          />
+          <input
+            type="button"
+            onClick={() => this.increment("-", i)}
+            value="-"
+          />
+        </div>
+      );
+    });
+
+    return (
+      <div>
+        <h1>The meat Food Department</h1>
+        <ul>{meatInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+
+function mapStateToProps(state) {
+
+  return {
+    meatData: state.meat,
+  };
+}
+
+export default connect(mapStateToProps)(MeatDept);
+
+// src/components/ProduceDept.js
+import React, { Component } from "react";
+
+import { connect } from "react-redux";
+import updateProduce from "../actions/produceInvUpdate";
+
+class ProduceDept extends Component {
+  increment = (operation, index) => {
+    if (operation === "+") {
+      console.log(updateProduce());
+    } else if (operation === "-") {
+    }
+  };
+
+  render() {
+    console.log(this.props.produceData);
+    const produceInventory = this.props.produceData.map((item, i) => {
+      return (
+        <div>
+          <li key={i}>
+            {item.food} : {item.quantity}
+          </li>
+          <input
+            type="button"
+            onClick={() => this.increment("+", i)}
+            value="+"
+          />
+          <input
+            type="button"
+            onClick={() => this.increment("-", i)}
+            value="-"
+          />
+        </div>
+      );
+    });
+
+    return (
+      <div>
+        <h1>The produce Food Department</h1>
+        <ul>{produceInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+
+function mapStateToProps(state) {
+
+  return {
+    produceData: state.produce,
+  };
+}
+
+export default connect(mapStateToProps)(ProduceDept);
+```
+
+```javascript
+// App.js
+import "./App.css";
+import FrozenDept from "./components/FrozenDept";
+import MeatDept from "./components/MeatDept";
+import ProduceDept from "./components/ProduceDept";
+
+function App() {
+  return (
+    <div className="App">
+      <FrozenDept />
+      <MeatDept />
+      <ProduceDept />
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Adding the Dispatcher + Adding Meat and Produce
+
+<img src="https://cdn-images-1.medium.com/max/800/1*muDlY0EP3xjgw_yJPIf7Xg.png" />
+
+```javascript
+// ----------------------------------------------------------------------------------------------
+// index.js
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+
+import { Provider } from "react-redux";
+import { createStore } from "redux";
+import rootReducer from "./reducers/rootReducer";
+
+const theStore = createStore(rootReducer);
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <Provider store={theStore}>
+    <App />
+  </Provider>
+);
+
+// ----------------------------------------------------------------------------------------------
+// App.js
+import "./App.css";
+import FrozenDept from "./components/FrozenDept";
+import MeatDept from "./components/MeatDept";
+import ProduceDept from "./components/ProduceDept";
+
+function App() {
+  return (
+    <div className="App">
+      <FrozenDept />
+      <MeatDept />
+      <ProduceDept />
+    </div>
+  );
+}
+
+export default App;
+
+// ----------------------------------------------------------------------------------------------
+// src/actions/frozenInvUpdate.js
+export default (operation, index) => {
+  console.log(operation, index);
+
+  return {
+    type: "updateFrozen",
+    payload: {
+      operation,
+      index,
+    },
+  };
+};
+
+// ----------------------------------------------------------------------------------------------
+// src/actions/meatInvUpdate.js
+export default (qChange, index) => {
+  return {
+    type: "updateMeat",
+    payload: {
+      qChange,
+      index,
+    },
+  };
+};
+
+// ----------------------------------------------------------------------------------------------
+// src/actions/produceInvUpdate.js
+export default (qChange, index) => {
+  console.log("Updating produce inventory!!!");
+  return {
+    type: "updateProduce",
+    payload: {
+      qChange,
+      index,
+    },
+  };
+};
+
+// ----------------------------------------------------------------------------------------------
+// src/reducers/frozenReducer.js
+const seedData = [
+  {
+    food: "TV Dinners",
+    quantity: 10,
+  },
+
+  {
+    food: "Frozen Veggies",
+    quantity: 21,
+  },
+
+  {
+    food: "Frozen Pizzas",
+    quantity: 25,
+  },
+];
+
+export default (state = seedData, action) => {
+  console.log("Frozen Reducer is running!");
+  console.log(action);
+
+  if (action.type === "updateFrozen") {
+    console.log("I care about this action!");
+    // We make a copy of state, because we never ever ever mutate state...
+    let newState = [...state];
+    if (action.payload.operation === "+") {
+      newState[action.payload.index].quantity++;
+    } else if (action.payload.operation === "-") {
+      newState[action.payload.index].quantity--;
+    }
+    return newState;
+  } else {
+    return state;
+  }
+};
+
+// ----------------------------------------------------------------------------------------------
+// src/reducers/meatReducer.js
+const seedData = [
+  {
+    food: "Chicken Breast",
+    quantity: 10,
+  },
+
+  {
+    food: "Bacon",
+    quantity: 21,
+  },
+
+  {
+    food: "Mahi Mahi",
+    quantity: 25,
+  },
+
+  {
+    food: "Salmon",
+    quantity: 25,
+  },
+];
+
+export default (state = seedData, action) => {
+  console.log("Meat Reducer is running!");
+
+  if (action.type === "updateMeat") {
+    const newState = [...state];
+    const payload = action.payload;
+    newState[payload.index].quantity += payload.qChange;
+    return newState;
+  } else {
+    return state;
+  }
+};
+
+// ----------------------------------------------------------------------------------------------
+// src/reducers/produceReducer.js
+const seedData = [
+  {
+    food: "Lettuce",
+    quantity: 10,
+  },
+
+  {
+    food: "Turnips",
+    quantity: 21,
+  },
+
+  {
+    food: "Apples",
+    quantity: 25,
+  },
+];
+
+export default (state = seedData, action) => {
+  console.log("Producer Reducer is running!");
+
+  if (action.type === "updateProduce") {
+    const payload = action.payload;
+    const newState = [...state];
+    newState[payload.index].quantity += payload.qChange;
+    return newState;
+  } else {
+    return state;
+  }
+};
+
+// ----------------------------------------------------------------------------------------------
+// src/reducers/rootReducer.js
+import { combineReducers } from "redux";
+
+import frozenReducer from "./frozenReducer";
+import produceReducer from "./produceReducer";
+import meatReducer from "./meatReducer";
+
+const rootReducer = combineReducers({
+  frozen: frozenReducer,
+  produce: produceReducer,
+  meat: meatReducer,
+});
+
+export default rootReducer;
+
+// ----------------------------------------------------------------------------------------------
+// src/components/FrozenDept.js
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import updateFrozen from "../actions/frozenInvUpdate";
+import { bindActionCreators } from "redux";
+
+class FrozenDept extends Component {
+
+  increment = (operation, index) => {
+    this.props.updateFrozen(operation, index);
+  };
+
+  render() {
+    console.log(this.props.meatData);
+    const frozenInventory = this.props.frozenData.map((item, i) => {
+      return (
+        <div key={i}>
+          <li>
+            {item.food} : {item.quantity}
+          </li>
+          <input
+            className="add-button"
+            type="button"
+            onClick={() => {
+              this.increment("+", i);
+            }}
+            value="+"
+          />
+          <input
+            className="subtract-button"
+            type="button"
+            onClick={() => {
+              this.increment("-", i);
+            }}
+            value="-"
+          />
+        </div>
+      );
+    });
+
+    return (
+      <div>
+        <h1>The Frozen Food Department</h1>
+        <ul>{frozenInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+
+function mapStateToProps(state) {
+
+  return {
+    frozenData: state.frozen,
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+
+  return bindActionCreators(
+    {
+      updateFrozen: updateFrozen,
+    },
+    dispatch
+  );
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(FrozenDept);
+
+// ----------------------------------------------------------------------------------------------
+// src/components/MeatDept.js
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import { bindActionCreators } from "redux";
+import updateMeat from "../actions/meatInvUpdate";
+
+class MeatDept extends Component {
+  increment = (qChanage, index) => {
+    this.props.updateMeat(qChanage, index);
+  };
+
+  render() {
+    console.log(this.props.meatData);
+    const meatInventory = this.props.meatData.map((item, i) => {
+      return (
+        <div key={i}>
+          <li>
+            {item.food} : {item.quantity}
+          </li>
+          <input type="button" onClick={() => this.increment(1, i)} value="+" />
+          <input
+            type="button"
+            onClick={() => this.increment(-1, i)}
+            value="-"
+          />
+        </div>
+      );
+    });
+
+    return (
+      <div>
+        <h1>The meat Food Department</h1>
+        <ul>{meatInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+
+function mapStateToProps(state) {
+
+  return {
+    meatData: state.meat,
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(
+    {
+      updateMeat: updateMeat,
+    },
+    dispatch
+  );
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MeatDept);
+
+// ----------------------------------------------------------------------------------------------
+// src/components/ProduceDept.js
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import updateProduce from "../actions/produceInvUpdate";
+import { bindActionCreators } from "redux";
+
+class ProduceDept extends Component {
+  increment = (qChange, index) => {
+    this.props.updateProduce(qChange, index);
+  };
+
+  render() {
+    console.log(this.props.produceData);
+    const produceInventory = this.props.produceData.map((item, i) => {
+      return (
+        <div key={i}>
+          <li>
+            {item.food} : {item.quantity}
+          </li>
+          <input type="button" onClick={() => this.increment(1, i)} value="+" />
+          <input
+            type="button"
+            onClick={() => this.increment(-1, i)}
+            value="-"
+          />
+        </div>
+      );
+    });
+
+    return (
+      <div>
+        <h1>The produce Food Department</h1>
+        <ul>{produceInventory}</ul>
+      </div>
+    );
+  }
+}
+
+console.log(connect);
+
+function mapStateToProps(state) {
+
+  return {
+    produceData: state.produce,
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(
+    {
+      updateProduce: updateProduce,
+    },
+    dispatch
+  );
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(ProduceDept);
 ```
