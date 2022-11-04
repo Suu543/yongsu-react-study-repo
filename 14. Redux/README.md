@@ -2025,3 +2025,191 @@ function mapDispatchToProps(dispatch) {
 
 export default connect(mapStateToProps, mapDispatchToProps)(ProduceDept);
 ```
+
+## Adding the Router and clearInventory
+
+```javascript
+// App.js
+import "./App.css";
+import FrozenDept from "./components/FrozenDept";
+import MeatDept from "./components/MeatDept";
+import ProduceDept from "./components/ProduceDept";
+import Navbar from "./components/Navbar";
+import Main from "./components/Main";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Navbar />
+
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Navbar />} />
+          <Route path="/main" element={<Main />} />
+          <Route path="/frozen-dept" element={<FrozenDept />} />
+          <Route path="/meat-dept" element={<MeatDept />} />
+          <Route path="/produce-dept" element={<ProduceDept />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+
+// src/actions/clearInterval.js
+export default () => {
+  console.log("Clear Inventory");
+
+  return {
+    type: "clearInventory",
+  };
+};
+
+// src/components/Navbar.js
+import { Component } from "react";
+import { Link } from "react-router-dom";
+
+class Navbar extends Component {
+  render() {
+    return (
+      <div>
+        <ul>
+          <li>
+            <Link to="/main">Entire Store</Link>
+          </li>
+          <li>
+            <Link to="/produce-dept">Produce Department</Link>
+          </li>
+          <li>
+            <Link to="/meat-dept">Meat Department</Link>
+          </li>
+          <li>
+            <Link to="/frozen-dept">Frozen Department</Link>
+          </li>
+        </ul>
+      </div>
+    );
+  }
+}
+
+export default Navbar;
+
+// src/components/Main.js
+import { Component } from "react";
+import { connect } from "react-redux";
+import clearInventory from "../actions/clearInventory";
+import { bindActionCreators } from "redux";
+
+class Main extends Component {
+  clearInventoryAction = () => {
+    this.props.clearInventory();
+  };
+
+  render() {
+    // this.props.clearInventory();
+
+    const frozenQuantity = this.props.frozenData.reduce(
+      (accum, frozenItem) => accum + frozenItem.quantity,
+      0
+    );
+
+    const meatQuantity = this.props.meatData.reduce(
+      (accum, meatItem) => accum + meatItem.quantity,
+      0
+    );
+
+    const produceQuantity = this.props.produceData.reduce(
+      (accum, produceItem) => accum + produceItem.quantity,
+      0
+    );
+
+    return (
+      <div>
+        <h2>FrozenDept: {frozenQuantity}</h2>
+        <h2>MeatDept: {meatQuantity}</h2>
+        <h2>ProduceDept: {produceQuantity}</h2>
+        <button onClick={this.clearInventoryAction}>
+          Clear All Inventory!
+        </button>
+      </div>
+    );
+  }
+}
+
+function mapStateToProps(state) {
+  return {
+    frozenData: state.frozen,
+    meatData: state.meat,
+    produceData: state.produce,
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(
+    {
+      clearInventory: clearInventory,
+    },
+    dispatch
+  );
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Main);
+
+// src/reducers/frozenReducer.js
+export default (state = seedData, action) => {
+  console.log("Frozen Reducer is running!");
+  console.log(action);
+  if (action.type === "updateFrozen") {
+    console.log("I care about this action!!!");
+    // we make a copy of state, because WE NEVER EVER EVER mutate state
+    let newState = [...state];
+    if (action.payload.operation === "+") {
+      newState[action.payload.index].quantity++;
+    } else if (action.payload.operation === "-") {
+      newState[action.payload.index].quantity--;
+    }
+    return newState;
+  } else if (action.type === "clearInventory") {
+    let newState = [...state];
+    newState.forEach((item, i) => {
+      item.quantity = 0;
+    });
+    return newState;
+  } else {
+    return state;
+  }
+};
+
+// src/reducers/meatReducer.js
+export default (state = seedData, action) => {
+  console.log("Meat Reducer is running!");
+  console.log(action);
+  if (action.type === "updateMeat") {
+    const newState = [...state];
+    const payload = action.payload;
+    newState[payload.index].quantity += payload.qChanage;
+    return newState;
+  } else if (action.type === "clearInventory") {
+    return [];
+  } else {
+    return state;
+  }
+};
+
+// src/reducers/produceReducer.js
+export default (state = seedData, action) => {
+  console.log("Producer Reducer is running!");
+  if (action.type === "updateProduce") {
+    const payload = action.payload;
+    const newState = [...state];
+    newState[payload.index].quantity += payload.qChange;
+    return newState;
+  } else if (action.type === "clearInventory") {
+    return [];
+  } else {
+    return state;
+  }
+};
+```
