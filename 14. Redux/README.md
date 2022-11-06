@@ -536,50 +536,6 @@ console.log(updated);
 
 기존의 객체에는 어떠한 영향도 주지 않습니다. 대신 `draftBook`은 일종의 `Proxy`로써 기존의 객체에 준 변화를 기록하고 이후 새로운 메모리를 할당해 변경된 사항을 반영해 리턴하는 방식으로 동작합니다. 이렇듯 가독성과 사용성 측면에서 쉽기 때문에 `immer`를 더 많이 사용합니다.
 
-## Redux and React
-
-<img src="https://cdn-images-1.medium.com/max/800/1*-fWEe25VRjO-esU3XAh6XA.png" />
-
-```javascript
-npx create-react-app redux101
-```
-
-`redux`와 `react`는 서로의 존재를 알지 못합니다. 그러므로 둘 사이를 연결할 중재자가 필요합니다. `react-redux` 모듈이 바로 이 중재자 역할을 해줍니다.
-`react-redux`에는 대표적으로 두 개의 요소가 존재합니다.
-
-- Provider
-- Connect
-
-좌측 아래의 그림을 중앙 저장소(store)로 , 우측 아래 그림을 리엑트 앱으로 간주하겠습니다.
-이 시나리오의 목표는 리엑트 컴포넌트가 좌측에 있는 중앙 저장소(store)와 의사소통할 수 있게 하는 것을 의미합니다.
-이 목표를 달성하는 과정에 `Provider` 컴포넌트를 활용할 수 있습니다.
-`Provider` 컴포넌트는 두 가지 역할을 합니다.
-
-1. 중앙 저장소(store)에 접근할 수 있습니다.
-2. `Provider` 컴포넌트는 리엑트 앱을 감싸줌으로써 부모 역할을 할 수 있습니다.
-
-이 개념을 잘 숙지한 체로 계속해서 `redux` 학습을 진행해보겠습니다.
-
-## How Redux Works
-
-<img src="https://d33wubrfki0l68.cloudfront.net/01cc198232551a7e180f4e9e327b5ab22d9d14e7/b33f4/assets/images/reduxdataflowdiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif" />
-
-`redux`는 해당 영상에 나오는 것을 포함해 크게 4가지로 구성됩니다.
-
-1. Store (직접 정의)
-2. Action Creators (직접 정의)
-3. Actions (직접 정의)
-4. Dispatch (Redux 제공)
-5. Reducer (직접 정의)
-
-`redux` 저장소에 저장된 데이터를 직접 변경하는 것은 불가능합니다. 그러므로 `redux`는 다음 순서로 동작하게 됩니다.
-
-1. **Store**: `Store (중앙 저장소)`에서 최초 정의한 상태 값을 리턴합니다.
-2. **Action Creators**: 리턴 받은 상태값 변경이 되는 시나리오를 분류해 `Action Creators`를 정의합니다.
-3. **Actions** `Action Creators`는 변경할 상태값 상태를 의미하는 `type`과, 변경할 상태값 데이터를 의미하는 `payload`가 담긴 `Action` 객체를 리턴합니다.
-4. **Dispatch**: 리턴된 `Action` 객체는 `Redux`에서 제공하는 `Dispatch` 함수를 통해 `Store (중앙 저장소)`로 전달됩니다.
-5. **Reducer**: 사전에 정의해 둔 `Reducers` 함수 중 전달받은 `Action` 객체를 처리할 수 있는 로직이 있는 경우 전달받은 `Payload`를 저장소에 반영합니다. 그렇지 않은 경우라도 `Dispatch` 함수가 호출된 기록은 남깁니다.
-
 ## Redux Architecture
 
 <img src="https://camo.githubusercontent.com/f78fe6a64eb1093a929c369973cb0a133f1672b932da58aefc1b4cdbc6c7a65f/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f313230302f312a2d3257694544796e4238793531396f644258767332672e706e67" />
@@ -786,13 +742,13 @@ function reducer(state = [], action) {
 `redux` 모듈을 통해 `저장소(store)`를 생성해보겠습니다.
 
 ```javascript
-import { createStore } from "redux";
-import reducer from "./reducer";
+// src/store.js
+const { createStore } = require("redux");
+const { reducer } = require("./reducer");
 
-// createStore is another higher order functon
 const store = createStore(reducer);
 
-export default store;
+module.exports = store;
 ```
 
 5. `이벤트 전송 (dispatching actions)` 정의
@@ -802,9 +758,9 @@ export default store;
 `subscribe` 함수는 상태 값에 변경이 발생하면 (reducer 함수가 호출되면) 매번 호출되는 함수입니다. 해당 함수는 인자로 콜백을 받고, 해당 콜백을 호출하는 방식으로 동작합니다.
 
 ```javascript
-import store from "./store";
+// src/index.js
+const store = require("./store");
 
-// redux에서 제공하는 현재 상태 값을 읽어오는 메소드입니다.
 store.subscribe(() => {
   console.log(store.getState());
 });
@@ -816,16 +772,12 @@ store.dispatch({
   },
 });
 
-console.log(store.getState());
-
 store.dispatch({
   type: "bugRemoved",
   payload: {
     id: 1,
   },
 });
-
-console.log(store.getState());
 ```
 
 6. `재사용 가능한 이벤트 (actions)` 정의
@@ -835,36 +787,28 @@ console.log(store.getState());
 
 - Rename: `bugAdded` ==> `bugCreated`
 
-```javascript
-import store from "./store";
-
-store.dispatch({
-  type: "bugAdded",
-  payload: {
-    description: "Bug1",
-  },
-});
-
-console.log(store.getState());
-```
-
 이 경우 기존에 정의해둔 `store`, `reducer` 모두 변경해야 하는 상황이 발생합니다. 이런 상황에 대비해 `actionType` 파일을 따로 생성함으로써 보다 유지 보수하기 좋은 코드를 작성할 수 있습니다. 예시를 통해 알아보겠습니다.
 
 ```javascript
-// dataTypes.js
-export const BUG_ADDED = "bugAdded";
-export const BUG_REMOVED = "bugRemoved";
+// src/actionTypes.js
+const BUG_ADDED = "bugAdded";
+const BUG_REMOVED = "bugRemoved";
 
-// reducer.js
-// import { BUG_ADDED, BUG_REMOVED } from "./actionTypes"; or
-import * as actions from "./actionTypes";
+module.exports.actions = {
+  BUG_ADDED,
+  BUG_REMOVED,
+};
+```
+
+```javascript
+// src/index.js
+const { actions } = require("./actionTypes");
 
 let lastId = 0;
 
-// Switch Cases Usage Version
-export default function reducer(state = [], action) {
-  switch (actions.BUG_ADDED) {
-    case "bugAdded":
+function reducer(state = [], action) {
+  switch (action.type) {
+    case actions.BUG_ADDED:
       return [
         ...state,
         {
@@ -873,15 +817,27 @@ export default function reducer(state = [], action) {
           resolved: false,
         },
       ];
+
     case actions.BUG_REMOVED:
       return state.filter((bug) => bug.id !== action.payload.id);
+
     default:
       return state;
   }
 }
 
-// index.js
-import store from "./store";
+module.exports = {
+  reducer,
+};
+```
+
+```javascript
+// src/index.js
+const store = require("./store");
+
+store.subscribe(() => {
+  console.log(store.getState());
+});
 
 store.dispatch({
   type: "bugAdded",
@@ -890,33 +846,55 @@ store.dispatch({
   },
 });
 
-console.log(store.getState());
+store.dispatch({
+  type: "bugRemoved",
+  payload: {
+    id: 1,
+  },
+});
 ```
 
 개선된 코드에도 여전히 한 가지 문제가 존재합니다.
 
 1. `action`을 여러 곳에 사용하는 경우 `state` 객체를 여러 번 작성해야 합니다.
-
-`action creator` 함수를 따로 생성해서 이 문제를 해결할 수 있습니다.
+   `action creator` 함수를 따로 생성해서 이 문제를 해결할 수 있습니다.
 
 ```javascript
-// actions.js
-import * as actions from "./actionTypes";
+// src/actions.js
 
-export const bugAdded = (description) => ({
+const { actions } = require("./actionTypes");
+
+const bugAdded = (description) => ({
   type: actions.BUG_ADDED,
   payload: {
     description,
   },
 });
 
-// index.js
-import store from "./store";
-import { bugAdded } from "./actions";
+const bugRemoved = (id) => ({
+  type: actions.BUG_REMOVED,
+  payload: {
+    id,
+  },
+});
+
+module.exports = {
+  bugAdded,
+  bugRemoved,
+};
+```
+
+```javascript
+// src/index.js
+const store = require("./store");
+const { bugAdded, bugRemoved } = require("./actions");
+
+store.subscribe(() => {
+  console.log(store.getState());
+});
 
 store.dispatch(bugAdded("Bug1"));
-
-console.log(store.getState());
+store.dispatch(bugRemoved(1));
 ```
 
 ### bugResolved - Practice
@@ -928,26 +906,26 @@ console.log(store.getState());
 5. Reducer
 
 ```javascript
-// 1. actionsTypes.js
+// src/actionTypes.js
 // BUG_RESOLVED 추가
-export const BUG_RESOLVED = "bugResolved";
+const BUG_ADDED = "bugAdded";
+const BUG_REMOVED = "bugRemoved";
+const BUG_RESOLVED = "bugResolved";
 
-// 2. actions.js
-export const bugResolved = (id) => ({
-  type: actions.BUG_RESOLVED,
-  payload: {
-    id,
-  },
-});
+module.exports.actions = {
+  BUG_ADDED,
+  BUG_REMOVED,
+  BUG_RESOLVED,
+};
 
-// 3. reducer.js
-import * as actions from "./actionTypes";
+// src/reducer.js
+const { actions } = require("./actionTypes");
 
 let lastId = 0;
 
-export default function reducer(state = [], action) {
-  switch (actions.BUG_ADDED) {
-    case "bugAdded":
+function reducer(state = [], action) {
+  switch (action.type) {
+    case actions.BUG_ADDED:
       return [
         ...state,
         {
@@ -970,18 +948,96 @@ export default function reducer(state = [], action) {
   }
 }
 
-// index.js
-import store from "./store";
-import { bugAdded, bugResolved } from "./actions";
+module.exports = {
+  reducer,
+};
+
+// src/actions.js
+const { actions } = require("./actionTypes");
+
+const bugAdded = (description) => ({
+  type: actions.BUG_ADDED,
+  payload: {
+    description,
+  },
+});
+
+const bugRemoved = (id) => ({
+  type: actions.BUG_REMOVED,
+  payload: {
+    id,
+  },
+});
+
+const bugResolved = (id) => ({
+  type: actions.BUG_RESOLVED,
+  payload: {
+    id,
+  },
+});
+
+module.exports = {
+  bugAdded,
+  bugRemoved,
+  bugResolved,
+};
+
+// src/index.js
+const store = require("./store");
+const { bugAdded, bugRemoved, bugResolved } = require("./actions");
+
+store.subscribe(() => {
+  console.log(store.getState());
+});
 
 store.dispatch(bugAdded("Bug1"));
-
-console.log(store.getState());
-
 store.dispatch(bugResolved(1));
-
-console.log(store.getState());
+store.dispatch(bugRemoved(1));
 ```
+
+## Redux and React
+
+<img src="https://cdn-images-1.medium.com/max/800/1*-fWEe25VRjO-esU3XAh6XA.png" />
+
+```javascript
+npx create-react-app redux101
+```
+
+`redux`와 `react`는 서로의 존재를 알지 못합니다. 그러므로 둘 사이를 연결할 중재자가 필요합니다. `react-redux` 모듈이 바로 이 중재자 역할을 해줍니다.
+`react-redux`에는 대표적으로 두 개의 요소가 존재합니다.
+
+- Provider
+- Connect
+
+좌측 아래의 그림을 중앙 저장소(store)로 , 우측 아래 그림을 리엑트 앱으로 간주하겠습니다.
+이 시나리오의 목표는 리엑트 컴포넌트가 좌측에 있는 중앙 저장소(store)와 의사소통할 수 있게 하는 것을 의미합니다.
+이 목표를 달성하는 과정에 `Provider` 컴포넌트를 활용할 수 있습니다.
+`Provider` 컴포넌트는 두 가지 역할을 합니다.
+
+1. 중앙 저장소(store)에 접근할 수 있습니다.
+2. `Provider` 컴포넌트는 리엑트 앱을 감싸줌으로써 부모 역할을 할 수 있습니다.
+
+이 개념을 잘 숙지한 체로 계속해서 `redux` 학습을 진행해보겠습니다.
+
+## How Redux Works
+
+<img src="https://d33wubrfki0l68.cloudfront.net/01cc198232551a7e180f4e9e327b5ab22d9d14e7/b33f4/assets/images/reduxdataflowdiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif" />
+
+`redux`는 해당 영상에 나오는 것을 포함해 크게 4가지로 구성됩니다.
+
+1. Store (직접 정의)
+2. Action Creators (직접 정의)
+3. Actions (직접 정의)
+4. Dispatch (Redux 제공)
+5. Reducer (직접 정의)
+
+`redux` 저장소에 저장된 데이터를 직접 변경하는 것은 불가능합니다. 그러므로 `redux`는 다음 순서로 동작하게 됩니다.
+
+1. **Store**: `Store (중앙 저장소)`에서 최초 정의한 상태 값을 리턴합니다.
+2. **Action Creators**: 리턴 받은 상태값 변경이 되는 시나리오를 분류해 `Action Creators`를 정의합니다.
+3. **Actions** `Action Creators`는 변경할 상태값 상태를 의미하는 `type`과, 변경할 상태값 데이터를 의미하는 `payload`가 담긴 `Action` 객체를 리턴합니다.
+4. **Dispatch**: 리턴된 `Action` 객체는 `Redux`에서 제공하는 `Dispatch` 함수를 통해 `Store (중앙 저장소)`로 전달됩니다.
+5. **Reducer**: 사전에 정의해 둔 `Reducers` 함수 중 전달받은 `Action` 객체를 처리할 수 있는 로직이 있는 경우 전달받은 `Payload`를 저장소에 반영합니다. 그렇지 않은 경우라도 `Dispatch` 함수가 호출된 기록은 남깁니다.
 
 ## Wiring Up Redux
 
