@@ -536,6 +536,26 @@ console.log(updated);
 
 기존의 객체에는 어떠한 영향도 주지 않습니다. 대신 `draftBook`은 일종의 `Proxy`로써 기존의 객체에 준 변화를 기록하고 이후 새로운 메모리를 할당해 변경된 사항을 반영해 리턴하는 방식으로 동작합니다. 이렇듯 가독성과 사용성 측면에서 쉽기 때문에 `immer`를 더 많이 사용합니다.
 
+## How Redux Works
+
+<img src="https://d33wubrfki0l68.cloudfront.net/01cc198232551a7e180f4e9e327b5ab22d9d14e7/b33f4/assets/images/reduxdataflowdiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif" />
+
+`redux`는 해당 영상에 나오는 것을 포함해 크게 4가지로 구성됩니다.
+
+1. Store (직접 정의)
+2. Action Creators (직접 정의)
+3. Actions (직접 정의)
+4. Dispatch (Redux 제공)
+5. Reducer (직접 정의)
+
+`redux` 저장소에 저장된 데이터를 직접 변경하는 것은 불가능합니다. 그러므로 `redux`는 다음 순서로 동작하게 됩니다.
+
+1. **Store**: `Store (중앙 저장소)`에서 최초 정의한 상태 값을 리턴합니다.
+2. **Action Creators**: 리턴 받은 상태값 변경이 되는 시나리오를 분류해 `Action Creators`를 정의합니다.
+3. **Actions** `Action Creators`는 변경할 상태값 상태를 의미하는 `type`과, 변경할 상태값 데이터를 의미하는 `payload`가 담긴 `Action` 객체를 리턴합니다.
+4. **Dispatch**: 리턴된 `Action` 객체는 `Redux`에서 제공하는 `Dispatch` 함수를 통해 `Store (중앙 저장소)`로 전달됩니다.
+5. **Reducer**: 사전에 정의해 둔 `Reducers` 함수 중 전달받은 `Action` 객체를 처리할 수 있는 로직이 있는 경우 전달받은 `Payload`를 저장소에 반영합니다. 그렇지 않은 경우라도 `Dispatch` 함수가 호출된 기록은 남깁니다.
+
 ## Redux Architecture
 
 <img src="https://camo.githubusercontent.com/f78fe6a64eb1093a929c369973cb0a133f1672b932da58aefc1b4cdbc6c7a65f/68747470733a2f2f63646e2d696d616765732d312e6d656469756d2e636f6d2f6d61782f313230302f312a2d3257694544796e4238793531396f644258767332672e706e67" />
@@ -1139,6 +1159,153 @@ store.dispatch(bugResolved(1));
 store.dispatch(bugRemoved(1));
 ```
 
+## Building Redux from Scratch
+
+`Redux`를 보다 더 자세히 이해하기 위해 `redux` 일부 기능을 직접 구현해보겠습니다.
+
+```javascript
+import store from "./store";
+import { bugAdded, bugResolved } from "./actions";
+
+console.log(store);
+// { dispatchL f, subscribe: f, getState: f, replaceReducer: f, Symbol(observable): f }
+// dispatch: f dispatch(action)
+// subscribe: f subscribe(listener)
+// getState: f getState()
+// replaceReducer: f replaceReducer(nextReducer)
+// Symbol(observable): f observable()
+// __proto__: Object
+
+store.dispatch(bugAdded("Bug 1"));
+store.dispatch(bugResolved(1));
+
+console.log(store.getState());
+```
+
+1. Private Properties
+
+```javascript
+// src/customStore.js
+function createStore() {
+  let state;
+
+  function getState() {
+    return state;
+  }
+
+  return {
+    getState,
+  };
+}
+
+export default createStore();
+
+// src/index.js
+import store from "./customStore";
+store.state = 1;
+
+console.log(store.getState());
+```
+
+2. Dispatching Actions
+
+```javascript
+// src/customStore.js
+import reducer from "./reducer";
+
+function createStore(reducer) {
+  let state;
+
+  function dispatch(action) {
+    state = reducer(state, action);
+  }
+
+  function getState() {
+    return state;
+  }
+
+  return {
+    dispatch,
+    getState,
+  };
+}
+
+export default createStore(reducer);
+
+// src/index.js
+import store from "./customStore";
+import * as actions from "./actions";
+
+store.dispatch(actions.bugAdded("Bug 1"));
+
+console.log(store.getState());
+```
+
+3. Subscribing to the Store
+
+```javascript
+// src/customStore.js
+import reducer from "./reducer";
+
+function createStore(reducer) {
+  let state;
+  let listeners = [];
+
+  function subscribe(listener) {
+    listeners.push(listener);
+  }
+
+  function dispatch(action) {
+    state = reducer(state, action);
+
+    for (let i = 0; i < listeners.length; i++) {
+      listeners[i]();
+    }
+  }
+
+  function getState() {
+    return state;
+  }
+
+  return {
+    subscribe,
+    dispatch,
+    getState,
+  };
+}
+
+export default createStore(reducer);
+
+// src/index.js
+import store from "./customStore";
+import * as actions from "./actions";
+
+store.subscribe(() => {
+  console.log("Store Changed!");
+});
+store.dispatch(actions.bugAdded("Bug 1"));
+
+console.log(store.getState());
+```
+
+## Debugging Redux Application
+
+1. `Redux DevTools` 설치
+
+- <a href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en">다운로드</a>
+- <a href="https://github.com/reduxjs/redux-devtools/tree/main/extension#installation">적용 방법</a>
+
+```javascript
+// src/store.js
+import { createStore } from "redux";
+import reducer from "./reducer";
+
+const store = createStore(
+  reducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+```
+
 ## Writing Clean Code - @reduxjs/toolkit
 
 Code: `15. REDUX_DEMO` 폴더
@@ -1438,25 +1605,658 @@ npx create-react-app redux101
 
 이 개념을 잘 숙지한 체로 계속해서 `redux` 학습을 진행해보겠습니다.
 
-## How Redux Works
+## Designing the Store
 
-<img src="https://d33wubrfki0l68.cloudfront.net/01cc198232551a7e180f4e9e327b5ab22d9d14e7/b33f4/assets/images/reduxdataflowdiagram-49fa8c3968371d9ef6f2a1486bd40a26.gif" />
+1. `Store Global State`
 
-`redux`는 해당 영상에 나오는 것을 포함해 크게 4가지로 구성됩니다.
+- Easy to implement (코드 작성의 용이함)
 
-1. Store (직접 정의)
-2. Action Creators (직접 정의)
-3. Actions (직접 정의)
-4. Dispatch (Redux 제공)
-5. Reducer (직접 정의)
+2. `Store All State`
 
-`redux` 저장소에 저장된 데이터를 직접 변경하는 것은 불가능합니다. 그러므로 `redux`는 다음 순서로 동작하게 됩니다.
+- Unified Data Access (데이터 접근의 통합)
+- Cacheability (결과값 저장의 용이함)
+- Easier Debugging (Redux DevTool) (디버깅의 용이함)
+- More Testable Code (테스트의 용이함)
 
-1. **Store**: `Store (중앙 저장소)`에서 최초 정의한 상태 값을 리턴합니다.
-2. **Action Creators**: 리턴 받은 상태값 변경이 되는 시나리오를 분류해 `Action Creators`를 정의합니다.
-3. **Actions** `Action Creators`는 변경할 상태값 상태를 의미하는 `type`과, 변경할 상태값 데이터를 의미하는 `payload`가 담긴 `Action` 객체를 리턴합니다.
-4. **Dispatch**: 리턴된 `Action` 객체는 `Redux`에서 제공하는 `Dispatch` 함수를 통해 `Store (중앙 저장소)`로 전달됩니다.
-5. **Reducer**: 사전에 정의해 둔 `Reducers` 함수 중 전달받은 `Action` 객체를 처리할 수 있는 로직이 있는 경우 전달받은 `Payload`를 저장소에 반영합니다. 그렇지 않은 경우라도 `Dispatch` 함수가 호출된 기록은 남깁니다.
+3. `Form State (Exception)`:
+
+형식 태그는 일시적인 값의 형태로 구성됩니다. 이에 `Redux`를 적용할 경우 불필요한 `Dispatch`가 발생하고 디버깅이 어려워집니다. 이러한 이유 때문에 폼 태그 데이터는 `Local State`를 사용해 처리하는 것이 일반적입니다.
+
+## Structuring a Redux Store
+
+`Object in Object`: 데이터 개수의 상관없이 원하는 데이터에 접근하는 데 같은 시간이 소요됩니다.
+
+```javascript
+{
+    1: { id: 1, description: "", resolved: false},
+    2: {},
+    3: {}
+}
+
+// state[1]
+// state[1000]
+```
+
+`Object in Array`: 데이터가 배열 순서에 맞춰 나열되기 때문에, 데이터를 찾는 과정에 많은 시간이 소요되는 단점이 있습니다. 만약 찾으려는 데이터가 1,000개의 데이터 중 1000번째에 위치한다면, 해당 데이터에 접근하기 위해 999번의 불필요한 연산이 발생합니다.
+
+```javascript
+[
+    { id: 1, description: "", resolved: false},
+    { ... },
+    { ... }
+]
+
+const idx = state.findIndex(bug => bug.id === 1);
+console.log(state[idx]);
+```
+
+두 방법 중 어느 것이 절대적으로 좋다고 말할 수 없습니다. `Object in Object` 방식이 데이터에 접근하는 관점에서는 더욱 효과적이지만, 데이터 간의 순서가 필요한 경우에는 `Object in Array` 방식이 더 효과적일 수 있습니다. 그뿐만 아니라 `Object in Object` 방식은 순서가 없으므로 정렬 등의 작업에는 적합하지 않습니다. 그러므로 해결하려는 문제에 적합한 방식을 선택하는 것이 중요합니다.
+
+`Mixed Object with Array`: `Object in Object` and `Object in Array` 방식의 장단점을 모두 살리는 방법은 `Object`와 `Array`를 섞는 방법입니다. 어떤 요소를 빠르게 읽어오고 싶은 경우 `byId` 프로퍼티를 이용하고, 정렬 등의 로직을 실행할 때는 `allIds` 프로퍼티를 이용할 수 있습니다.
+
+```javascript
+{
+  byId: {
+    1: { ... },
+    2: { ... },
+    3: { ... },
+  },
+  allIds: [3, 1, 2]
+}
+```
+
+둘 이상의 `slice`가 있다 생각했을 때, `entities` 등과 같은 부모 프로퍼티 자식으로 정의하는 것이 더욱 더 논리적이고 체계적임을 알 수 있습니다.
+
+```javascript
+{
+  bugs: [],
+  projects: [],
+  tags: []
+}
+
+// ------------------
+
+{
+  entities: {
+    bugs: [],
+    projects: [],
+    tags: []
+  },
+}
+```
+
+`entities`와 같은 레벨의 프로퍼티가 추가될 경우 다음과 같이 코드를 구성할 수 있습니다.
+
+```javascript
+{
+  entities: { ... },
+  auth: { userId: 1, name: "John" },
+  ui: {
+    bugs: { query: "...", sortBy: "..." }
+  }
+}
+```
+
+## Combining Reducers
+
+<img src="https://cdn-images-1.medium.com/max/800/1*8EX3KdwRrjQFqV1sgRI7bA.png" />
+
+```javascript
+// store/bugs.js
+const { createSlice } = require("@reduxjs/toolkit");
+
+let lastId = 0;
+
+const slice = createSlice({
+  name: "bugs",
+  initialState: [],
+  reducers: {
+    bugAdded: (bugs, action) => {
+      bugs.push({
+        id: ++lastId,
+        description: action.payload.description,
+        resolved: false,
+      });
+    },
+
+    bugResolved: (bugs, action) => {
+      const index = bugs.findIndex((bug) => bug.id === action.payload.id);
+      bugs[index].resolved = true;
+    },
+
+    bugRemoved: (bugs, action) => {
+      bugs.filter((bug) => bug.id !== action.payload.id);
+    },
+  },
+});
+
+module.exports = {
+  bugsReducer: slice.reducer,
+  bugsActions: slice.actions,
+};
+```
+
+```javascript
+// store/projects.js
+const { createSlice } = require("@reduxjs/toolkit");
+
+let lastId = 0;
+
+const slice = createSlice({
+  name: "projects",
+  initialState: [],
+  reducers: {
+    projectAdded: (projects, action) => {
+      projects.push({
+        id: ++lastId,
+        name: action.payload.name,
+      });
+    },
+  },
+});
+
+module.exports = {
+  projectsReducer: slice.reducer,
+  projectsActions: slice.actions,
+};
+```
+
+```javascript
+// src/users.js
+const { createSlice } = require("@reduxjs/toolkit");
+
+let lastId = 0;
+
+const slice = createSlice({
+  name: "users",
+  initialState: [],
+  reducers: {
+    userAdded: (users, action) => {
+      users.push({
+        id: ++lastId,
+        name: action.payload.name,
+      });
+    },
+  },
+});
+
+module.exports = {
+  usersReducer: slice.reducer,
+  usersActions: slice.actions,
+};
+```
+
+```javascript
+// src/entities.js
+const { combineReducers } = require("redux");
+const { bugsReducer } = require("./bugs");
+const { projectsReducer } = require("./projects");
+const { usersReducer } = require("./users");
+
+module.exports = combineReducers({
+  bugs: bugsReducer,
+  projects: projectsReducer,
+  users: usersReducer,
+});
+```
+
+```javascript
+// src/entities.js
+const { combineReducers } = require("redux");
+const { bugsReducer } = require("./bugs");
+const { projectsReducer } = require("./projects");
+const { usersReducer } = require("./users");
+
+module.exports = combineReducers({
+  bugs: bugsReducer,
+  projects: projectsReducer,
+  users: usersReducer,
+});
+```
+
+```javascript
+// src/reducer.js
+
+const { combineReducers } = require("redux");
+const entitiesReducer = require("./entities");
+
+module.exports = combineReducers({
+  entities: entitiesReducer,
+});
+```
+
+```javascript
+// src/store/configureStore.js
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+
+module.exports = function () {
+  return configureStore({ reducer });
+};
+```
+
+```javascript
+// src/index.js
+const configureBugStore = require("./store/configureStore");
+const { bugsActions } = require("./store/bugs");
+const { projectsActions } = require("./store/projects");
+const { usersActions } = require("./store/users");
+
+const store = configureBugStore();
+console.log(store.getState());
+
+store.subscribe(() => {
+  console.log(store.getState().entities);
+  console.log(store.getState().entities.bugs);
+  console.log(store.getState().entities.projects);
+  console.log(store.getState().entities.users);
+});
+
+store.dispatch(bugsActions.bugAdded({ description: "Bug 1" }));
+store.dispatch(bugsActions.bugAdded({ description: "Bug 2" }));
+store.dispatch(bugsActions.bugAdded({ description: "Bug 3" }));
+store.dispatch(bugsActions.bugAdded({ description: "Bug 4" }));
+store.dispatch(bugsActions.bugResolved({ id: 1 }));
+store.dispatch(bugsActions.bugResolved({ id: 2 }));
+store.dispatch(bugsActions.bugResolved({ id: 3 }));
+store.dispatch(bugsActions.bugResolved({ id: 4 }));
+store.dispatch(bugsActions.bugRemoved({ id: 1 }));
+store.dispatch(bugsActions.bugRemoved({ id: 2 }));
+store.dispatch(bugsActions.bugRemoved({ id: 3 }));
+store.dispatch(bugsActions.bugRemoved({ id: 4 }));
+
+store.dispatch(projectsActions.projectAdded({ name: "Project 1" }));
+store.dispatch(projectsActions.projectAdded({ name: "Project 2" }));
+store.dispatch(projectsActions.projectAdded({ name: "Project 3" }));
+store.dispatch(projectsActions.projectAdded({ name: "Project 4" }));
+
+store.dispatch(usersActions.userAdded({ name: "User 1" }));
+store.dispatch(usersActions.userAdded({ name: "User 2" }));
+store.dispatch(usersActions.userAdded({ name: "User 3" }));
+store.dispatch(usersActions.userAdded({ name: "User 4" }));
+```
+
+## Normalization
+
+데이터 중복을 방지는 상태 관리에서 핵심적으로 관리해야 하는 점 중 하나입니다. 중복 방지에는 여러 방법을 적용할 수 있지만, 간단하게는 2가지 방법이 존재합니다.
+
+1.  데이터 중첩 제거
+2.  의미론적 프로퍼티 작명
+
+```javascript
+[
+  {
+    id: 1,
+    description: "",
+    project: { id: 1, name: "a" },
+  },
+  {
+    id: 1,
+    description: "",
+    project: { id: 1, name: "a" },
+  },
+][
+  // 1. 데이터 중첩 제거
+  ({
+    id: 1,
+    description: "",
+    project: 1(id),
+  },
+  {
+    id: 1,
+    description: "",
+    project: 1(id),
+  })
+][
+  // 2. 의미론적 프로퍼티 작명
+  ({
+    id: 1,
+    description: "",
+    projectId: 1,
+  },
+  {
+    id: 1,
+    description: "",
+    projectId: 1,
+  })
+];
+```
+
+## Selectors
+
+다음 코드의 결과와 같은 세부 로직은 외부에 노출할 필요가 없어서 `bugs.js` 파일로 이동함으로 추상화를 구현할 수 있습니다.
+
+```javascript
+// src/index.js
+
+const unresolvedBugs = store
+  .getState()
+  .entities.bugs.filter((bug) => !bug.resolved);
+```
+
+```javascript
+// src/store/bugs.js
+const { createSlice, createSelector } = require("@reduxjs/toolkit");
+
+let lastId = 0;
+
+const slice = createSlice({
+  name: "bugs",
+  initialState: [],
+  reducers: {
+    bugAssignedToUser: (bugs, action) => {
+      const { bugId, userId } = action.payload;
+      const index = bugs.findIndex((bug) => bug.id === bugId);
+      bugs[index].userId = userId;
+    },
+
+    bugAdded: (bugs, action) => {
+      bugs.push({
+        id: ++lastId,
+        description: action.payload.description,
+        resolved: false,
+      });
+    },
+
+    bugResolved: (bugs, action) => {
+      const index = bugs.findIndex((bug) => bug.id === action.payload.id);
+      bugs[index].resolved = true;
+    },
+
+    bugRemoved: (bugs, action) => {
+      bugs.filter((bug) => bug.id !== action.payload.id);
+    },
+  },
+});
+
+const getUnresolvedBugs = (state) =>
+  state.entities.bugs.filter((bug) => !bug.resolved);
+```
+
+```javascript
+// src/index.js
+
+const unresolvedBugs = getUnresolvedBugs(store.getState());
+console.log(unresolvedBugs);
+
+const x = getUnresolvedBugs(store.getState());
+const y = getUnresolvedBugs(store.getState());
+console.log(x === y); // false
+```
+
+`Redux`는 값에 변동이 없는 경우 `State`를 그대로 유지해야 합니다. 이 말은 `x === y` 연산을 했을 때 결과가 같음으로 간주하여야 하는데, 다른 값으로 간주하는 문제가 발생합니다. `store.gestate` 함수는 메모리를 꽤 크게 차지하는 함수이기 때문에, 그 값을 기억해두고, 값에 변경이 없는 경우 함수를 두 번 호출하지 않고 그대로 값을 사용해야 합니다. 이런 구현 방식을 `Memoization`이라 칭합니다.
+
+Memoization: Memoization is a technique for optimizing expensive function.
+
+```javascript
+f(x) => y
+```
+
+정의된 함수의 결과를 `Cache Memory`에 저장하고 ({ input: 1, output: })
+이후 이 함수에 `input: 1`값으로 함수 호출이 발생했을 때, 함수를 다시 호출해 리턴 값을 반환하는 대신에, `Cache Memory`가 이전 결과를 기억하기 때문에 함수 재호출 없이 바로 결과를 반환받을 수 있습니다. 만약 이 함수가 천 줄 정도의 수많은 조건문과 반복문으로 구성된 함수라면 성능적으로 큰 이점을 얻을 수 있습니다.
+
+`Redux`에서는 `createSelector` 함수를 통해 `Memoization`을 구현할 수 있습니다.
+
+`createSelector`
+
+1. `createSelector` 함수는 둘 이상의 인자 값을 받을 수 있습니다.
+2. 마지막 인자 값을 제외하고는 모두 `상태(state)`에 대한 정보를 인자 값으로 받습니다.
+3. 마지막 인자를 제외한, 모든 인자 값이 순서대로 함수의 형태로 마지막 인자 함수의 인자 값으로 정의 순서대로 전달됩니다.
+4. 다음 예시와 같이 `bugs, projects` 순서로 인자 값이 붙습니다.
+
+```javascript
+// src/store/bugs.js
+const { createSelector } = require("@reduxjs/toolkit");
+
+const getUnresolvedBugs = createSelector(
+  (state) => state.entities.bugs,
+  (state) => state.entities.projects,
+  (bugs, projects) => bugs.filter((bug) => !bug.resolved)
+);
+```
+
+`Exercise`
+Add the ability to
+
+- assign a bug to a team member
+- get the list of bugs assigned to a team memberㅌ
+
+Steps
+
+- Create a slice for users. { id, name }
+- Create an action for adding a user.
+- Create an action for assigning a bug to a user.
+- Create a selector for getting bugs by a user.
+
+## Middleware
+
+`Creating Middleware`
+
+```javascript
+// src/store/middleware/logger.js
+const logger = (store) => (next) => (action) => {
+  console.log("Store: ", store);
+  console.log("Next: ", next);
+  console.log("Action: ", action);
+};
+
+module.exports = logger;
+
+// Currying
+// N ==> 1
+```
+
+```javascript
+// middleware/logger.js
+const logger = (store) => (next) => (action) => {
+  // const { getState, dispatch } = store;
+  console.log("Store: ", store);
+  console.log("Next: ", next);
+  console.log("Action: ", action);
+  next(action);
+};
+
+module.exports = logger;
+```
+
+```javascript
+// src/store/configureStore.js
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+const logger = require("./middleware/logger.js");
+
+module.exports = function () {
+  return configureStore({
+    reducer,
+    middleware: [logger],
+  });
+};
+```
+
+```javascript
+// src/index.js
+const configureBugStore = require("./store/configureStore");
+const { bugsActions, bugsSelectors } = require("./store/bugs");
+const { projectsActions } = require("./store/projects");
+const { usersActions } = require("./store/users");
+
+const store = configureBugStore();
+
+store.dispatch(bugsActions.userAdded({ name: "User 1" }));
+```
+
+`Parameterizing Middleware`
+다음과 같이 코드를 작성하면 `store` 인자에 `console` 문자가 할당되게 됩니다. 이 문제를 방지하기 위해 `param` 인자를 하나 더 추가하는 방법을 활용할 수 있습니다.
+
+```javascript
+// src/store/configureStore.js
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+const logger = require("./middleware/logger.js");
+
+module.exports = function () {
+  return configureStore({
+    reducer,
+    middleware: [logger("console")],
+  });
+};
+
+// middleware/logger.js
+const logger = (param) => (store) => (next) => (action) => {
+  console.log("Param: ", param);
+  // const { getState, dispatch } = store;
+  console.log("Store: ", store);
+  console.log("Next: ", next);
+  console.log("Action: ", action);
+  next(action);
+};
+
+module.exports = logger;
+
+// -------------------------------------------------------
+// src/store/configureStore.js
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+const logger = require("./middleware/logger.js");
+
+module.exports = function () {
+  return configureStore({
+    reducer,
+    middleware: [logger({ description: "console" })],
+  });
+};
+```
+
+`Dispatching Functions - (redux-thunk)`
+
+```javascript
+// src/index.js
+const store = configureStore();
+
+store.dispatch(() => {
+  // Call an API
+  // When the promise is resolved ==> dispatch()
+  // If the promise is rejected ==> dispatch()
+});
+
+// src/store/middleware/func.js
+const func = (store) => (next) => (action) => {
+  if (typeof action === "function") {
+    action();
+  } else {
+    next(action);
+  }
+};
+
+module.exports = func;
+
+// src/store/configureStore.js
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+const logger = require("./middleware/logger.js");
+
+module.exports = function () {
+  return configureStore({
+    reducer,
+    middleware: [logger({ description: "console" }), func],
+  });
+};
+```
+
+```javascript
+// src/store/middleware/func.js
+const func =
+  ({ dispatch, getState }) =>
+  (next) =>
+  (action) => {
+    if (typeof action === "function") {
+      action(dispatch, getState);
+    } else {
+      next(action);
+    }
+  };
+
+// src/index.js
+const store = configureStore();
+
+// Thunk ==> Humorous Version of past tense of think
+// dispatch 함수의 인자 값이 함수이기 때문에 func 미들웨어 함수에 걸리게 됩니다. = redux-thunk
+store.dispatch((dispatch, getState) => {
+  // index.js 상단에 store를 정의했기 때문에 store에 접근할 수 있지만, 위와 같은 코드 베이스로 정의하지 않을 때에는 store에 접근할 수 없습니다.
+  // store.dispatch({ type: "bugsReceived", bugs: [1, 2, 3, 4, 5] });
+
+  // 위 문제를 해결하기 위해 다음과 같이 인자로 전달받은 dispatch를 사용할 수 있습니다.
+  dispatch({ type: "bugsReceived", bugs: [1, 2, 3, 4, 5] });
+
+  console.log(getState());
+});
+```
+
+`Redux Toolkit`에서 `getDefaultMiddleware`는 `redux-thunk`를 기본으로 제공해주기 때문에 다음과 같이 코드를 작성하면 `dispatch` 함수의 인자 값으로 함수가 들어왔을 때 손쉽게 처리할 수 있습니다.
+
+```javascript
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+const { logger } = require("./middleware/logger");
+
+module.exports = function () {
+  return configureStore({
+    reducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(logger({ destination: "console" })),
+  });
+};
+```
+
+`Exercise`
+
+```javascript
+// src/index.js
+const store = configureStore();
+
+store.dispatch({
+  type: "error",
+  payload: { message: "An error occurred." },
+});
+
+// Testcase
+store.dispatch({
+  type: "X",
+  payload: { message: "An error occurred." },
+});
+```
+
+```javascript
+// src/store/middleware/toast.js
+const toast = (store) => (next) => (action) => {
+  if (action.type === "error") {
+    console.log("Toastify", action.payload.message);
+  } else {
+    next(action);
+  }
+};
+
+module.exports = toast;
+```
+
+```javascript
+// src/store/configureStore.js
+const { configureStore } = require("@reduxjs/toolkit");
+const reducer = require("./reducer");
+const logger = require("./middleware/logger");
+const toast = require("./middleware/toast");
+
+module.exports = function () {
+  return configureStore({
+    reducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(logger({ destination: "console" }), toast),
+  });
+};
+```
+
+<img src="https://i.stack.imgur.com/WHAl0.png" />
+마지막 `redux middleware` 함수의 `next`에는 `dispatch` 함수가 전달됩니다. `dispatch` 가 호출되면 다시 `middleware` 처음으로 요청이 들어가는 방식으로 동작합니다.
 
 ## Wiring Up Redux
 
@@ -1524,153 +2324,6 @@ export default (state = [], action) => {
 // }
 
 // export default frozen;
-```
-
-## Building Redux from Scratch
-
-`Redux`를 보다 더 자세히 이해하기 위해 `redux` 일부 기능을 직접 구현해보겠습니다.
-
-```javascript
-import store from "./store";
-import { bugAdded, bugResolved } from "./actions";
-
-console.log(store);
-// { dispatchL f, subscribe: f, getState: f, replaceReducer: f, Symbol(observable): f }
-// dispatch: f dispatch(action)
-// subscribe: f subscribe(listener)
-// getState: f getState()
-// replaceReducer: f replaceReducer(nextReducer)
-// Symbol(observable): f observable()
-// __proto__: Object
-
-store.dispatch(bugAdded("Bug 1"));
-store.dispatch(bugResolved(1));
-
-console.log(store.getState());
-```
-
-1. Private Properties
-
-```javascript
-// src/customStore.js
-function createStore() {
-  let state;
-
-  function getState() {
-    return state;
-  }
-
-  return {
-    getState,
-  };
-}
-
-export default createStore();
-
-// src/index.js
-import store from "./customStore";
-store.state = 1;
-
-console.log(store.getState());
-```
-
-2. Dispatching Actions
-
-```javascript
-// src/customStore.js
-import reducer from "./reducer";
-
-function createStore(reducer) {
-  let state;
-
-  function dispatch(action) {
-    state = reducer(state, action);
-  }
-
-  function getState() {
-    return state;
-  }
-
-  return {
-    dispatch,
-    getState,
-  };
-}
-
-export default createStore(reducer);
-
-// src/index.js
-import store from "./customStore";
-import * as actions from "./actions";
-
-store.dispatch(actions.bugAdded("Bug 1"));
-
-console.log(store.getState());
-```
-
-3. Subscribing to the Store
-
-```javascript
-// src/customStore.js
-import reducer from "./reducer";
-
-function createStore(reducer) {
-  let state;
-  let listeners = [];
-
-  function subscribe(listener) {
-    listeners.push(listener);
-  }
-
-  function dispatch(action) {
-    state = reducer(state, action);
-
-    for (let i = 0; i < listeners.length; i++) {
-      listeners[i]();
-    }
-  }
-
-  function getState() {
-    return state;
-  }
-
-  return {
-    subscribe,
-    dispatch,
-    getState,
-  };
-}
-
-export default createStore(reducer);
-
-// src/index.js
-import store from "./customStore";
-import * as actions from "./actions";
-
-store.subscribe(() => {
-  console.log("Store Changed!");
-});
-store.dispatch(actions.bugAdded("Bug 1"));
-
-console.log(store.getState());
-```
-
-## Debugging Redux Application
-
-1. `Redux DevTools` 설치
-
-- <a href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en">다운로드</a>
-- <a href="https://github.com/reduxjs/redux-devtools/tree/main/extension#installation">적용 방법</a>
-
-```javascript
-// src/store.js
-import { createStore } from "redux";
-import reducer from "./reducer";
-
-const store = createStore(
-  reducer,
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-);
 ```
 
 ## Connecting Redux and React + Adding an Action Creator and Action
