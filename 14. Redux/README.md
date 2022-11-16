@@ -777,11 +777,13 @@ module.exports = store;
 
 `subscribe` 함수는 상태 값에 변경이 발생하면 (reducer 함수가 호출되면) 매번 호출되는 함수입니다. 해당 함수는 인자로 콜백을 받고, 해당 콜백을 호출하는 방식으로 동작합니다.
 
+`subscribe` 함수는 `unsubscribe`(구독 취소)함수를 리턴합니다. 그래서 이 함수를 실행하게 되면 더는 값의 추적을 하지 않음을 의미합니다. 보통은 `componentWillUnmount` 라이프 사이클에서 해당 함수를 호출합니다.
+
 ```javascript
 // src/index.js
 const store = require("./store");
 
-store.subscribe(() => {
+const unsubscribe = store.subscribe(() => {
   console.log(store.getState());
 });
 

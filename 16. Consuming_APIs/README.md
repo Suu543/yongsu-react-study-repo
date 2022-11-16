@@ -1054,3 +1054,7 @@ store.dispatch(loadBugs());
 setTimeout(() => store.dispatch(resolveBug(1)), 2000);
 // setTimeout(() => store.dispatch(assignBugToUser(1, 4)), 2000);
 ```
+
+## Reducing Coupling
+
+## Cohesion
