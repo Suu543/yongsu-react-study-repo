@@ -4,8 +4,7 @@ const StateTutorial = () => {
   const [counter, setCounter] = useState(0);
 
   const increment = () => {
-    counter = counter + 1;
-    console.log(counter);
+    setCounter(counter + 1);
   };
 
   return (

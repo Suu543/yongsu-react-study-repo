@@ -1555,16 +1555,21 @@ const slice = createSlice({
   },
 });
 
-module.exports = slice;
+module.exports = {
+  projectsReducer: slice.reducer,
+  projectActions: slice.actions,
+};
 ```
 
 ```javascript
 // src/store/configureProjectsStore.js
 const { configureStore } = require("@reduxjs/toolkit");
-const { reducer } = require("./projects");
+const { projectsReducer } = require("./projects");
 
 function configureProjectStore() {
-  return configureStore({ reducer });
+  return configureStore({
+    reducer: projectsReducer,
+  });
 }
 
 module.exports = configureProjectStore;
@@ -1573,15 +1578,19 @@ module.exports = configureProjectStore;
 ```javascript
 // src/projectIndex.js
 const configureProjectStore = require("./store/configureProjectsStore");
-const { actions } = require("./store/projects");
+const { projectActions: actions } = require("./store/projects");
 
 const store = configureProjectStore();
 
-store.subscribe(() => {
+const unsubscribe = store.subscribe(() => {
   console.log(store.getState());
 });
 
-store.dispatch(actions.projectAdded({ name: "yongsu" }));
+store.dispatch(actions.projectAdded({ name: "redux" }));
+store.dispatch(actions.projectAdded({ name: "react" }));
+store.dispatch(actions.projectAdded({ name: "node" }));
+
+unsubscribe();
 ```
 
 ## Redux and React
