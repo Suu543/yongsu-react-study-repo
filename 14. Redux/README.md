@@ -1467,6 +1467,7 @@ createReducer([], {
 // src/store/bugs.js
 const { createSlice } = require("@reduxjs/toolkit");
 
+// Reducer
 let lastId = 0;
 
 const slice = createSlice({
@@ -1486,22 +1487,26 @@ const slice = createSlice({
       bugs[index].resolved = true;
     },
 
-    bugRemoved: (bugs, action) => {
-      bugs.filter((bug) => bug.id !== action.payload.id);
-    },
+    bugRemoved: (bugs, action) =>
+      bugs.filter((bug) => bug.id !== action.payload.id),
   },
 });
 
-module.exports = slice;
+module.exports = {
+  bugsReducer: slice.reducer,
+  bugsActions: slice.actions,
+};
 ```
 
 ```javascript
 // srcstore/configureBugsStore.js
 const { configureStore } = require("@reduxjs/toolkit");
-const { reducer } = require("./bugs");
+const { bugsReducer } = require("./bugs");
 
 function configureBugStore() {
-  return configureStore({ reducer });
+  return configureStore({
+    reducer: bugsReducer,
+  });
 }
 
 module.exports = configureBugStore;
@@ -1510,17 +1515,13 @@ module.exports = configureBugStore;
 ```javascript
 // src/bugIndex.js
 const configureBugStore = require("./store/configureBugsStore");
-const { actions } = require("./store/bugs");
+const { bugsActions: actions } = require("./store/bugs");
 
 const store = configureBugStore();
 
-store.subscribe(() => {
+const unsubscribe = store.subscribe(() => {
   console.log(store.getState());
 });
-
-// store.dispatch(bugAdded("Bug1"));
-// store.dispatch(bugResolved(1));
-// store.dispatch(bugRemoved(1));
 
 store.dispatch(actions.bugAdded({ description: "Bug 1" }));
 store.dispatch(actions.bugAdded({ description: "Bug 2" }));
