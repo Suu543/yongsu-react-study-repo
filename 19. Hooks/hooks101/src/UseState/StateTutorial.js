@@ -1,16 +1,17 @@
 import { useState } from "react";
 
 const StateTutorial = () => {
-  const [counter, setCounter] = useState(0);
+  const [inputValue, setInputValue] = useState("Yongsu");
 
-  const increment = () => {
-    setCounter(counter + 1);
+  const onChange = (event) => {
+    const newValue = event.target.value;
+    setInputValue(newValue);
   };
 
   return (
     <div>
-      {counter}
-      <button onClick={increment}>Increment</button>
+      <input onChange={onChange} placeholder="입력해주세요..." />
+      {inputValue}
     </div>
   );
 };
