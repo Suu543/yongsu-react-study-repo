@@ -1278,3 +1278,106 @@ export default UseRefFifth;
 2. `useRef`를 활용해 생성한 참조 값에는 `reference` 프로퍼티가 존재합니다. `current` 프로퍼티에 렌더링에 영향을 받지 않는 값을 정의하고, `reference.current = newValue` 방식으로 값을 갱신합니다.
 3. `참조값(reference)` 갱신에는 재렌더링이 발생하지 않지만, `상태값(state)` 갱신에는 재렌더링이 발생합니다.
 4. `참조값(refernce`)을 `DOM` 요소의 `ref` 속성으로 할당하면, 최초 렌더링 이후 `reference.current` 프로퍼티를 통해 접근할 수 있습니다. 이는 `e.target`과 같은 기능이 있습니다.
+
+## useLayoutEffect
+
+`동기(Synchronous)`란 렌더링 전에 호출되는 것을 의미하고, `비동기(Asynchronous)`란 렌더링 이후에 호출되는 것을 의미합니다.
+
+> `Render`: `DOM Tree`를 구성하기 위해 각 요소의 스타일 속성을 계산하는 과정
+>
+> `Paint`: 실제 스크린에 `Layout`을 표시하고 갱신하는 과정
+
+<img src="https://cdn-images-1.medium.com/max/800/0*wEPeNMLa2SJhJCq5.png"  />
+
+1. useEffect
+
+`useEffect`는 컴포넌트가 `render ==> paint` 된 후 실행됩니다. 비동기적으로 실행합니다. `paint`된 후 실행되기 때문에, `useEffect` 내부에 `DOM`에 영향을 주는 코드가 있으면 사용자 처지에서는 화면의 깜빡임을 보게됩니다. 이는 마치 식당에서 요리가 제공된 후, 식탁에서 요리에 다른 재료를 올리는 것과 같은 상황을 생각할 수 있습니다.
+
+<br />
+
+<img src="https://cdn-images-1.medium.com/max/800/0*umQcRQt3r2pN-ppv.png" />
+
+2. useLayoutEffect
+
+`useLayoutEffect`는 컴포넌트가 `render` 된 후 실행되며, 그 이후 `paint`되는 방식으로 동작합니다. 동기적으로 동작합니다. `paint`가 되기 전에 실행되기 때문에 `DOM`을 조작하는 코드가 존재하더라도 사용자는 깜빡임을 경험하지 않습니다.
+
+`useLayoutEffect`는 동기적으로 실행되고 내부의 코드가 모두 실행된 후 `painting` 작업을 거칩니다. 따라서 `useLayoutEffect body` 부분에 정의한 로직이 너무 복잡하고, 많은 컴퓨팅 파워를 요구하는 경우 사용자가 레이아웃을 보는 데까지 시간이 오래 걸리고 성능이 저하된다는 단점이 있습니다. `React` 공식 문서에서는 `useEffect` 사용을 권장합니다.
+
+아래 항목에 해당하는 작업은 `useEffect` 사용을 권장합니다.
+
+> - Data Fetch
+> - Event Handler
+> - State Reset
+
+```javascript
+const Layout = () => {
+  const [count, setCount] = useState(0);
+
+  useLayoutEffect(() => {
+    if (value === 0) {
+      setValue(10 + Math.random() * 200);
+    }
+  }, [count]);
+
+  return <button onClick={() => setCount(0)}>Count: {count}</button>;
+};
+
+export default Layout;
+```
+
+위 코드와 같이 초기값과 `paint`된 후의 값이 다를 때 깜빡임이 일어날 수 있어, 이 경우 `useLayoutEffect`를 사용하는 게 바람직합니다.
+
+## useLayoutEffect Example
+
+```javascript
+import { useState, useRef, useEffect } from "react";
+
+const UseLayoutExample = () => {
+  const [show, setShow] = useState(false);
+  const popup = useRef();
+  const button = useRef();
+
+  useEffect(() => {
+    if (popup.current == null || button.current == null) return;
+    const { bottom } = button.current.getBoundingClientRect();
+    popup.current.style.top = `${bottom + 25}px`;
+  }, [show]);
+
+  return (
+    <>
+      <button ref={button} onClick={() => setShow((prev) => !prev)}>
+        Click Here
+      </button>
+      {show && (
+        <div style={{ position: "absolute" }} ref={popup}>
+          This is a popup
+        </div>
+      )}
+    </>
+  );
+};
+
+export default UseLayoutExample;
+```
+
+`useEffect`와 `useLayoutEffect` 비교할 때 `깜빡거림(Blinky)` 효과 발생을 비교해 볼 수 있습니다.
+
+```javascript
+import React, { useState, useLayoutEffect } from "react";
+
+const UseLayoutExampleSec = () => {
+  const [value, setValue] = useState(0);
+
+  useLayoutEffect(() => {
+    if (value === 0) {
+      setValue(10 + Math.random() * 200);
+    }
+  }, [value]);
+
+  console.log("render", value);
+
+  return <div onClick={() => setValue(0)}>value: {value}</div>;
+};
+
+export default UseLayoutExampleSec;
+```
