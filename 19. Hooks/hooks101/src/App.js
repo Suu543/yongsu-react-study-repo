@@ -7,11 +7,12 @@ import EffectTutorialThree from "./UseEffect/EffectTutorialThird";
 import EffectTutorialFour from "./UseEffect/EffectTutorialFourth";
 import EffectTutorialFive from "./UseEffect/EffectTutorialFifth";
 import RefTutorial from "./UseRef/RefTutorial";
+import RefIntro from "./UseRef/RefIntro";
 
 function App() {
   return (
     <>
-      <RefTutorial />
+      <RefIntro />
     </>
   );
 }

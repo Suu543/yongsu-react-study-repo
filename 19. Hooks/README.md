@@ -518,7 +518,7 @@ const EffectTutorial = () => {
 export default EffectTutorial;
 ```
 
-### 1. `useEffect` with no second argument
+## 1. `useEffect` with no second argument
 
 `useEffect` 함수의 두번째 인자로 어떠한 값도 할당하지 않았을 때. 내부적으로 `null` or `undefined`를 할당합니다.
 이 경우 두 가지 경우의 수가 존재합니다.
@@ -595,11 +595,7 @@ export default EffectTutorialSecond;
 
 if your state is a primitive value(number, string, boolean, ...), then setting the same value using setState hook won't trigger a rerender. If your state is an Object or Array then it will behave differently.
 
-https://overreacted.io/how-are-function-components-different-from-classes/
-https://dmitripavlutin.com/value-vs-reference-javascript/
-https://stackoverflow.com/questions/59489959/set-state-with-same-value-using-hooks-will-cause-a-rerender
-
-### 2. `useEffect` with an empty array as a second argument
+## 2. `useEffect` with an empty array as a second argument
 
 `useEffect`의 두 번째 인자 값으로 `빈 배열([])`을 전달하면 최초 `render` 함수가 호출되고, 이후 단 한 번만 호출되는 방식으로 동작합니다. 클래스 컴포넌트의 `componentDidMount` 함수와 똑같이 동작한다 생각할 수 있습니다.
 
@@ -632,7 +628,7 @@ const EffectTutorialThird = () => {
 export default EffectTutorialThird;
 ```
 
-### 3. `useEffect` with Promise and Async/Await
+## 3. `useEffect` with Promise and Async/Await
 
 `useEffect` 함수의 첫 번째 인자에 다음 코드와 같이 `async/await`을 적용하는 경우 경고 문구가 출력됩니다. `useEffect` 함수의 리턴값은 `cleanup`로써 아무것도 반환하지 않거나 Clean up 함수를 반환합니다. 하지만 `async/await`의 경우 `Promise`를 리턴하기 때문에 경고 문구가 출력됩니다.
 
@@ -725,7 +721,7 @@ const EffectTutorialFourth = () => {
 export default EffectTutorialFourth;
 ```
 
-### 4. `useEffect` with an array as a second argument
+## 4. `useEffect` with an array as a second argument
 
 `useEffect` 함수의 두 번째 인자 값으로 배열을 정의하고, 배열의 요소로써 정의한 상태 값을 할당하면, 최초 렌더링 이후에 한 번 호출되고, 배열 요소에 정의된 상태 값이 변경이 발생했을 때만 `useEffect body` 부분이 재호출합니다.
 
@@ -761,26 +757,405 @@ const EffectTutorialFifth = () => {
 export default EffectTutorialFifth;
 ```
 
-### 5. `useEffect` return cleanup function
+## 5. `useEffect` return cleanup function
+
+`Mounting`: 컴포넌트가 처음 나타남 <br />
+`Updating`: 컴포넌트 내부의 `state` or `props`가 업데이트 됨 <br />
+`Unmounting`: 컴포넌트가 사라짐
 
 `useEffect` 함수의 리턴값은 `cleanup` 목적으로 사용할 수 있습니다.
 
-And finally, the one that calls the callback on the first render and every time some state in the dependencies array changes:
+`useEffect` 함수는 한 번 호출되고, 재호출 되기 전, 내부적으로 혹은 직접 정의한 `return` 함수를 호출하고, 다시 `useEffect`를 호출합니다. 구조를 그려보자면, 다음과 같습니다.
 
-- https://stackoverflow.com/questions/72767464/what-happens-for-an-useeffect-with-no-second-argument-or-one-equal-to-null-or-un
-- https://stackoverflow.com/questions/53070970/infinite-loop-in-useeffect
-- https://stackoverflow.com/questions/72767464/what-happens-for-an-useeffect-with-no-second-argument-or-one-equal-to-null-or-un
-- https://stackoverflow.com/questions/59489959/set-state-with-same-value-using-hooks-will-cause-a-rerender
+1. useEffect 호출
+2. useEffect return 함수 호출
+3. useEffect 재호출
 
-- https://dev.to/colocodes/6-use-cases-of-the-useeffect-reactjs-hook-282o
+`useEffect` 함수가 위와 같이 동작하기 때문에, `cleanup` 기능을 정의하기에 적합합니다.
 
-마운트 : 처음 나타남
-언마운트 : 사라짐
+- mount: 컴포넌트가 나타남
+- unmount: 컴포넌트가 사라짐
 
-- https://blog.logrocket.com/understanding-react-useeffect-cleanup-function/
-- https://dillionmegida.com/p/why-you-should-cleanup-when-component-unmounts/
+1. `unmounting`시점에 `promise`가 `resolve` 되면 해당 데이터를 받을 곳이 없으므로 오류가 발생할 수 있습니다. `unmounting` 되기 이전 강제로 진행중인 `Promise`를 해제해줌으로써 다음 오류를 방지할 수 있습니다.
 
-## useRef
+<img src="https://cdn-images-1.medium.com/max/800/0*kJp4cTOSlUQbra9v.png" />
+
+## 6. `useEffect` return cleanup function usages
+
+비동기 API 호출, DOM 업데이트, Socket 생성 등의 과정에서 `부작용(side-effect)`이 자주 발생합니다. `useEffect` 함수의 리턴값으로 `cleanup` 함수를 리턴함으로써 이런 `부작용(side-effect)`을 체계적으로 관리할 수 있습니다.
+
+`useEffect` 함수 리턴 값으로 정의하는 `Cleanup` 함수란 더는 실행될 필요가 없는 코드를 제거해주는 역할을 합니다.
+
+- **Example1**: A 컴포넌트가 제품을 가져오기 위해 비동기 API 요청을 보냈고, 이 요청을 처리하기 전 A 컴포넌트가 DOM에서 `제거된다면 (Unmounting)`, 해당 요청을 더는 처리할 필요가 없게 됩니다. 이 상황에 `cleanup` 함수를 이용해 비동기 요청을 강제로 종료할 수 있습니다.
+
+- **Example2**: B 컴포넌트가 웹 소켓을 열어 서버와 데이터를 주고받다가, DOM에서 B 컴포넌트가 `제거된다면(Unmounting)`, 더는 소켓 연결을 유지 할 필요가 없습니다. `cleanup`함수를 이용해 컴포넌트가 `제거되기(Unmounting)`전 소켓 연결을 종료함으로써 부작용을 방지할 수 있습니다.
+
+컴포넌트가 DOM에서 제거되는 시점에 `cleanup` 함수를 정의해야 하는 이유 <br /> (Why should you cleanup when a component unmounts?)
+
+1. 메모리 누수를 방지
+2. 앱 사용자에게 최적의 경험
+3. 예상치 못한 앱 오류를 방지
+
+### 6-1: 메모리 누수 방지(To avoid memory leaks)
+
+`Memory Leak: 메모리 누수`
+
+메모리 누수는 사용처가 없음에도 메모리 공간을 차지하면 발생합니다. 이후 메모리가 꼭 필요한 상황에 메모리 누수 때문에 메모리 부족 현상 등이 발생할 수 있습니다. 컴포넌트가 `나타난 상태(Mounting)`라면 누수 문제를 걱정하지 않아도 되지만, `제거된 상태(Unmounting)`라면 누수 문제를 걱정해야 합니다. 몇몇 경우 `Garbage Collection`이 메모리 관리를 도와주지만, 이것으로 충분치 않은 경우가 많기 때문 `cleanup` 함수를 통해 직접 관리하는 것이 좋습니다.
+
+## 6-2: 앱 사용자에게 최적의 경험 제공(To optimize our application for a good user experience)
+
+메모리 누수가 발생해도 앱이 정상적으로 동작할 수 있습니다. 하지만 이러한 누수가 중첩되다 보면 앱 렌더링 속도 및 성능에 영향을 미칠 수 있고, 이는 결과적으로 사용자 경험의 악화로 이어질 수 있기 때문에, 메모리 누수 관리를 철저히 하는 것이 중요합니다.
+
+## 6-3: 예상치 못한 앱 오류 방지(To prevent unexpected errors in our applications)
+
+예상치 못한 오류는 대게 비동기 등 시점에 직관적이지 않았을 때 발생합니다.
+
+```javascript
+import { useState, useEffect } from "react";
+
+function RandomChild() {
+  const [state, setState] = useState(0);
+
+  useEffect(() => {
+    console.log("Got Here");
+
+    setTimeout(() => {
+      setState(1);
+    }, 3000);
+  }, []);
+
+  return <>RandomChild</>;
+}
+
+function RandomParent() {
+  const [show, setShow] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setShow(false);
+    }, 1000);
+  }, []);
+
+  return <div>{show && <RandomChild />}</div>;
+}
+
+export default RandomParent;
+```
+
+코드를 보면 `RandomParent` 컴포넌트의 상태값 `show = true`이 설정되어있습니다. `화면에 렌더링 되는(Mounting)` 시점에 `App` 컴포넌트의 `useEffect body`의 `setTimeout` 함수 내부에서 1초 이후에 `show = false`값으로 상태를 업데이트 하게 되고, 그 결과 `RandomChild` 컴포넌트는 `사라집니다(Unmounting)`.
+
+`RandomChild` 컴포넌트가 `사라졌음에도(Unmounting)` `useEffect body`의 `setTimeout` 함수 내부에서 3초 이후에 `setState = 1`로 업데이트하는 동작이 발생합니다. 이는 존재하지 않는 컴포넌트 상태 값에 갱신을 하는 것이기 때문에 메모리 누수가 발생해 다음과 오류가 발생합니다.
+
+<img src="https://cdn-images-1.medium.com/max/800/0*lVoD0uQ6Vl52zrlB.png" />
+
+`useEffect` 함수의 리턴값으로 `cleanup` 함수를 정의해 위와 같은 오류를 방지할 수 있습니다.
+
+### How to Cleanup side effects in React
+
+`cleanup` 함수 실제 용례를 알아보겠습니다.
+
+The syntax of `useEffect`:
+
+```javascript
+useEffect(callbackFunction, dependencies);
+```
+
+The syntax of `useEffect cleanup` is:
+
+```javascript
+useEffect(() => {
+  return () => {
+    // cleanup logic here
+  };
+}, dependencies);
+```
+
+`cleanup` 함수 호출 조건:
+
+1. `componentWillUnmount`
+2. `componentDidUpdate`
+
+## 1. Cleaning up API requests on unmount
+
+`AbortController` 클래스를 이용해 `fetch` or `axios` 요청을 취소할 수 있습니다.
+
+`컴포넌트가 제거된 상태(unmounting)`에서 `fetch` 요청이 완료되지 않았다면 해당 요청을 취소할 수 있습니다.
+
+```javascript
+import { useState, useEffect } from "react";
+
+const Request = () => {
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const fetchData = async () => {
+      const response = await fetch("api...", { signal });
+      // do something with response
+    };
+
+    fetchData();
+
+    return () => controller.abort();
+  }, []);
+
+  return <h2>Cleaning up API requests on unmount</h2>;
+};
+
+export default Request;
+```
+
+## 2. Cleaning up WebSocket connections
+
+컴포넌트가 사라지기 전, `socket` 통신을 끊을 수 있습니다.
+
+```javascript
+import { useEffect } from "react";
+
+const Socket = () => {
+  useEffect(() => {
+    const protocols = "";
+    const socket = new WebSocket("url...", protocols);
+
+    return () => socket.close();
+  }, []);
+
+  return <h2>Socket</h2>;
+};
+
+export default Socket;
+```
+
+## 3. Cleaning up timeouts
+
+컴포넌트가 사라지기 전, `setTimeout`함수 콜백이 처리되고 있다면, 해당 `setTimeout` 함수를 취소할 수 있습니다.
+
+```javascript
+import { useEffect } from "react";
+
+const Time = () => {
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      // do something in the timeout
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+};
+
+export default Time;
+```
+
+## useRef vs Refs
+
+`useRef` 함수는 `초기 값(initial value)`으로 하나의 인자를 받고, 참조 값을 리턴합니다 (ref). 이 참조 값에는 `current`라는 프로퍼티가 존재합니다.
+
+```javascript
+import { useRef } from "react";
+
+const MyComponent = () => {
+  const reference = useRef(null);
+
+  const refHandler = () => {
+    const newValue = "";
+    // ref 값에 접근하고 싶은 경우
+    const value = reference.current;
+
+    // ref 값을 갱신하고 싶은 경우
+    value.current = newValue;
+  };
+};
+
+export default MyComponent;
+```
+
+`reference.current`를 통해 참조 값에 접근할 수 있고, `reference.current = newValue` 방식으로 참조 값을 갱신할 수 있습니다.
+
+```javascript
+----------------------------
+   Object: Reference        |
+----------------------------
+   current = referenceValue |
+----------------------------
+```
+
+1. `useRef` 함수를 활용해 생성한 참조 값은 `재렌더링(Re-rendering)`이 발생해도 그 값이 변함없이 유지됩니다.
+2. `useRef` 함수를 활용해 생성한 참조 값이 변경되어도 `재렌더링(Re-rendering)`이 발생하지 않습니다.
+
+### Use Case #1: Logging Button Clicks
+
+```javascript
+import { useRef } from "react";
+
+const LogButtonClicks = () => {
+  const countRef = useRef(0);
+
+  const handleCount = () => {
+    countRef.current++;
+    console.log(`Clicked ${countRef.current} times`);
+  };
+
+  console.log("I rendered!");
+
+  return <button onClick={handleCount}>Click Me</button>;
+};
+
+export default LogButtonClicks;
+```
+
+1. `countRef` 변수에 `useRef`로 생성한 참 조값이 할당됩니다. (초기값 = 0).
+2. 버튼을 클릭 시 `handleCount` 함수가 호출되면서, `countRef.current` 참조 값이 1증가 합니다.
+3. `countRef.current` 값이 1증가 했음에도, 재렌더링은 발생하지 않습니다. `console.log("I rendered!");`가 1회 출력된다는 점에서 이를 확인할 수 있습니다.
+
+### The difference between Reference and State
+
+`참조 값(Reference)`과 `상태 값(State)`은 어떤 차이가 있을까요?
+
+```javascript
+import { useRef, useState } from "react";
+
+const UseRefThird = () => {
+  const [count, setCount] = useState(0);
+
+  const handle = () => {
+    const updatedCount = count + 1;
+    console.log(`Clicked ${updatedCount} times`);
+    setCount(updatedCount);
+  };
+
+  console.log("I rendered!");
+
+  return <button onClick={handle}>Click Me</button>;
+};
+
+export default UseRefThird;
+```
+
+버튼을 클릭할 때마다 `I rendered` 메세지가 출력됩니다. 이는 매번 재렌더링이 발생함을 확인할 수 있습니다.
+
+주요한 차이는 다음과 같습니다.
+
+1. `참조값(reference)`은 재렌더링을 발생시키지 않습니다. 반면에 `상태 값(state)`은 재렌더링을 발생시킵니다.
+2. `참조값(reference)`은 값 갱신시 동기적으로 바로 갱신됩니다. 반면에 `상태 값(state)`은 재렌더링 이후 비동기적으로 갱신됩니다.
+
+## useRef: Implementing a stopwatch
+
+`React` 컴포넌트는 `상태(state)`가 변할 때 마다 `렌더링(rendering)`되는 방식으로 동작합니다. 예를 들면, 다음 `Counter` 컴포넌트에서 증가 버튼을 5번 클릭하면 5번 `렌더링`이 발생합니다.
+
+컴포넌트 함수가 다시 호출된다는 것은, 함수 내부의 변수들이 초기화되어, 내부 함수 로직이 실행됨을 의미합니다.
+
+```javascript
+import { useState } from "react";
+
+const RefIntro = () => {
+  const [count, setCount] = useState(0);
+  console.log(`렌더링... count: ${count}`);
+
+  return (
+    <>
+      <h1>{count}번 클릭했습니다!</h1>
+      <button onClick={() => setCount(count + 1)}>클릭</button>
+    </>
+  );
+};
+
+export default RefIntro;
+```
+
+다시 렌더링 되어도 동일한 참조값을 유지하고 싶은 경우가 있습니다.
+
+위와 같이 클릭 시 `count` 값이 변할 때마다, `React` 컴포넌트 함수가 재호출되어 화면이 갱신되기를 바랍니다. 하지만 이에 따른 부작용으로 기존에 정의해둔 변수값들이 초기화되거나, 갱신된 값으로 설정됩니다. 특정 로직에는 컴포넌트 내의 값이 그대로 보존되어야 하는 경우가 있습니다.
+
+앞으로 사용할 예시에 등장하는 `setInterval()` 함수는 `clearTimeout` 함수를 이용해 타이머를 제때 삭제하지 않는 경우 메모리 누수로 이어질 수 있기 때문에 주의가 필요합니다.
+
+```javascript
+import { useState, useEffect } from "react";
+
+const RefAutoCounter = () => {
+  const [count, setCount] = useState(0);
+  console.log(`렌더링... count: ${count}`);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => setCount((count) => count + 1), 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  return <p>Auto Counter: {count}</p>;
+};
+
+export default RefAutoCounter;
+```
+
+만약 카운트를 자동으로 시작하지 않고 버튼을 이용하여 시작하고, 정지하고 싶은 경우에 다음과 같이 코드를 작성할 수 있습니다.
+
+```javascript
+import { useState } from "react";
+
+const RefAutoCounterProblem = () => {
+  const [count, setCount] = useState(0);
+
+  let intervalId;
+
+  const startCounter = () => {
+    intervalId = setInterval(() => setCount((count) => count + 1), 1000);
+  };
+
+  const stopCounter = () => {
+    clearInterval(intervalId);
+  };
+
+  return (
+    <>
+      <p>자동 카운트: {count}</p>
+      <button onClick={startCounter}>시작</button>
+      <button onClick={stopCounter}>정지</button>
+    </>
+  );
+};
+
+export default RefAutoCounterProblem;
+```
+
+여기서 가장 큰 문제는 `startCounter` 함수와, `stopCounter` 함수가 `intervalId` 변수에 접근할 수 있도록 해야 한다는점 입니다. 이렇게 하려면 `intervalId` 변수를 두 함수 밖의 위치에 선언해야 하는 데, `count` 값이 바뀔 때마다 컴포넌트 함수가 호출되어 `intervalId` 값도 매번 새로운 값으로 바뀔 것입니다. 브라우저 메모리에는 아직 정리되지 못한 `intervalId` 값이 1초에 하나씩 쌓여가는 문제가 발생합니다. `useRef` 훅을 사용하면 이러한 문제를 효과적으로 해결할 수 있습니다.
+
+클래스 컴포넌트는 `constructor`를 이용해 인스턴스를 생성하기 때문에 이와 같은 문제를 손쉽게 해결할 수 있지만, 함수형 컴포넌트는 `useRef`를 사용해 이 문제를 해결할 수 있습니다.
+
+```javascript
+import { useState, useRef } from "react";
+
+const RefAutoCounterSolution = () => {
+  const [count, setCount] = useState(0);
+  const intervalId = useRef(null);
+  console.log(`렌더링... count: ${count}`);
+
+  const startCounter = () => {
+    intervalId.current = setInterval(
+      () => setCount((count) => count + 1),
+      1000
+    );
+    console.log(`시작... intervalId: ${intervalId.current}`);
+  };
+
+  const stopCounter = () => {
+    clearInterval(intervalId.current);
+    console.log(`정지... intervalId: ${intervalId.current}`);
+  };
+
+  return (
+    <>
+      <p>자동 카운트: {count}</p>
+      <button onClick={startCounter}>시작</button>
+      <button onClick={stopCounter}>정지</button>
+    </>
+  );
+};
+
+export default RefAutoCounterSolution;
+```
+
+`useRef` 함수를 사용해 카운터 앱을 구현 시 새로운 렌더링이 발생해도 값이 초기화되거나, 메모리 누수가 발생하지 않습니다. 시작 버튼을 누르면 새로운 `intervalId`가 생성되고, 원하는 시점에 정비 버튼을 누르면 기존 `intervalId`가 정리되는 것을 확인할 수 있습니다.
+
+## useRef: Accessing DOM Element
 
 `React`는 `VirtualDOM`으로 동작합니다. `document.getElement[...]`등 `DOM`에 직접 접근하는 코드를 사용하지 않습니다. 그럼에도 `DOM` 요소에 직접 접근해야 하는 상황이 발생할 때가 있습니다. 이 경우 `useRef` 함수를 사용하면 `VirtualDOM`을 통해 렌더링함에도 `DOM` 요소에 접근할 수 있게 됩니다.
 
@@ -836,6 +1211,70 @@ export default RefTutorial;
 - DOM: `event.target.value = ""`
 - useRef: `current.value = ""`
 
-### useRef Exercise
+## Ref is null on initial rendering
 
-- https://www.daleseo.com/react-hooks-use-ref/
+초기 렌더링 동안, `DOM` 요소를 포함하고 있는 참조 값에는 `null` 값이 할당됩니다.
+
+```javascript
+import { useRef, useEffect } from "react";
+
+function UseRefFourth() {
+  const inputRef = useRef();
+
+  useEffect(() => {
+    // Logs `HTMLInputElement`
+    console.log(inputRef.current);
+    inputRef.current.focus();
+  }, []);
+
+  // Logs `undefined` during initial rendering
+  console.log(inputRef.current);
+
+  return <input ref={inputRef} type="text" />;
+}
+
+export default UseRefFourth;
+```
+
+초기 렌더링 과정에는 `DOM` 구조가 형성되지 않았기 때문에, `inputRef.current` 값은 `undefined`이 할당됩니다. `useEffect`는 화면이 그려지는(mounting) 단계 이후에 호출되기 때문에, 이 시점에는 `DOM` 구조가 형성되어 있기 때문에 `inputRef.current` 값이 할당됨을 확인할 수 있습니다.
+
+`useRef` 함수를 사용해 `DOM` 요소에 접근하고 싶은 경우, 최초 호출되는 `useEffect body` 코드를 작성하면, 확실히 요소를 읽어왔음을 보장할 수 있습니다.
+
+## Updating references restriction
+
+함수형 컴포넌트의 함수 범위(함수 내의 전역)는 결과를 계산하거나, 함수를 호출할 때 이용합니다. 이 관점에서, 참조 값 혹은 상태 값 갱신은 함수 범위가 아닌, 핸들러 함수 혹은 콜백 함수 범위에서 이뤄져야 합니다. 참조 값의 경우 반드시 `useEffect body` 혹은 정의한 핸들러 함수(event handler, timer handlers, etc) 내부에서 이뤄져야 합니다.
+
+```javascript
+import { useRef, useEffect } from "react";
+
+function UseRefFifth({ prop }) {
+  const myRef = useRef(0);
+
+  useEffect(() => {
+    myRef.current++; // Good!
+    setTimeout(() => {
+      myRef.current++; // Good!
+    }, 1000);
+  }, []);
+
+  const handler = () => {
+    myRef.current++; // Good!
+  };
+  myRef.current++; // Bad!
+
+  if (prop) {
+    myRef.current++; // Bad!
+  }
+
+  return <button onClick={handler}>My button</button>;
+}
+
+export default UseRefFifth;
+```
+
+## Summary
+
+1. `const reference = useRef(초기값)` 방식으로 참조 값을 생성합니다.
+2. `useRef`를 활용해 생성한 참조 값에는 `reference` 프로퍼티가 존재합니다. `current` 프로퍼티에 렌더링에 영향을 받지 않는 값을 정의하고, `reference.current = newValue` 방식으로 값을 갱신합니다.
+3. `참조값(reference)` 갱신에는 재렌더링이 발생하지 않지만, `상태값(state)` 갱신에는 재렌더링이 발생합니다.
+4. `참조값(refernce`)을 `DOM` 요소의 `ref` 속성으로 할당하면, 최초 렌더링 이후 `reference.current` 프로퍼티를 통해 접근할 수 있습니다. 이는 `e.target`과 같은 기능이 있습니다.
