@@ -1,10 +1,10 @@
 import "./App.css";
-import UseLayoutExampleSec from "./UseLayoutEffect/UseLayoutExampleSec";
+import UseCallbackDemo from "./UseCallback/UseCallbackDemoSeventh";
 
 function App() {
   return (
     <>
-      <UseLayoutExampleSec />
+      <UseCallbackDemo />
     </>
   );
 }

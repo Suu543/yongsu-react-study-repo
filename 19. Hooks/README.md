@@ -1381,3 +1381,721 @@ const UseLayoutExampleSec = () => {
 
 export default UseLayoutExampleSec;
 ```
+
+## useMemo
+
+`useMemo` 이름에서 `memo`는 `memoization (메모이제이션)`을 의미합니다.
+
+```javascript
+function calculate() {
+  return 100 * 100;
+}
+
+let value = "";
+
+value = calculate(); // 100 * 100
+value = calculate(); // 100 * 100
+value = calculate(); // 100 * 100
+```
+
+`Memoization (메모이제이션)`은 항상 같은 값을 리턴하는 함수를 반복적으로 호출해야 하는 경우,
+맨 처음 값을 계산할 때, 해당 값을 메모리에 저장해서, 다음에 사용될 때 다시 계산하지 않고 메모리에서 꺼내 재사용하는 기법입니다. 일종의 캐싱 개념이라 생각할 수 있습니다.
+
+1. 함수형 컴포넌트(Functional Component)는 말 그대로 함수다.
+2. 함수형 컴포넌트가 렌더링 된다는 것은 해당 함수가 호출됨을 의미합니다.
+3. 함수는 호출될 때마다 모든 내부 변수 초기화가 발생합니다.
+
+```javascript
+function calculate() {
+  return 100 * 100;
+}
+
+function FunctionalComponent() {
+  const value = calculate();
+  return <div>{value}</div>;
+}
+```
+
+1. 렌더링
+2. FunctionalComponent 함수 호출
+3. 모든 내부 변수 초기화
+
+`FunctionalComponent` 함수 내부에 `value` 변수에는 `calculate` 함수의 리턴값이 할당됩니다. `calculate` 함수는 항상 같은 값을 리턴하는 `순수 함수(Pure Function)`입니다.
+
+만약 `calculate` 함수가 많은 컴퓨팅 파워를 요구하는 작업을 하는 경우, 렌더링마다 `calculate` 함수는 같은 값을 리턴함에도 다시 계산을 해야 한다는 비효율적인 상황이 생깁니다.
+
+이 경우 `useMemo` 함수를 통한 `memoization (메모이제이션)`을 활용해 비효율적인 상황을 해결할 수 있습니다.
+
+```javascript
+function calculate() {
+  return 100 * 100;
+}
+
+function FunctionalComponent() {
+  const value = useMemo(() => calculate(), []);
+  return <div>{value}</div>;
+}
+```
+
+`useMemo` 함수를 적용하는 경우, 렌더링 발생시 `FunctionComponent` 함수를 호출하는 동시에 `memoization (메모이제이션)`이 발생합니다. 이후 재렌더링 발생 시 `calculate` 함수를 다시 계산하지 않고 `memoize (메모이즈)` 된 값을 재사용하는 방식으로 동작합니다.
+
+1. 렌더링
+2. FunctionComponent 함수 호출
+3. value 변수에 `memoization (메모이제이션)` 적용을 통한 `calculate` 함수 리턴 값 저장
+4. 재렌더링
+5. FunctionalComponent 함수 호출 `memoize (메모이즈)`된 값을 재사용
+
+```javascript
+// useMemo Syntax
+
+const value = useMemo(() => {
+  return calculate();
+}, [item]);
+```
+
+- 첫 번째 인자로는 콜백 함수를 받습니다.
+  - 해당 콜백함수가 리턴하는 값이 `useMemo` 함수가 리턴하는 값으로 동작합니다.
+- 두 번째 인자로는 배열(의존성 배열)을 받습니다.
+  - `useMemo` 함수는 두 번째 인자인 의존성 배열 내부에 정의한 변수의 값이 변경된 경우에만 다시 콜백 함수를 호출해 갱신된 값을 반영하는 방식으로 동작합니다.
+  - 빈 배열을 할당하는 경우, `Component Mounting` 시점에만 호출되고 그 이후에는 다시 호출되지 않습니다.
+
+`useMemo` 함수를 사용한다는 것은 값을 재사용하기 위해 따로 메모리를 소비해 공간을 할당하는 것이기 때문에, 불필요한 값까지 이 방식을 사용하는 경우 성능에 악영향을 미칠 수 있기 때문에 필요한 경우에만 사용하는 것을 추천해 드립니다.
+
+### useMemo Demo1
+
+- Before useMemo
+
+```javascript
+import { useState } from "react";
+
+const hardCalculate = (number) => {
+  console.log("hard Calculator");
+  // Takes Time
+  for (let i = 0; i < 99999999999; i++) {}
+  return number + 9999999;
+};
+
+const UseMemoDemo = () => {
+  const [hardNum, setHardNum] = useState(1);
+  const hardSum = hardCalculate(hardNum);
+
+  return (
+    <div>
+      <h1>Hard Calculator</h1>
+      <input
+        type="number"
+        value={hardNum}
+        onChange={(e) => setHardNum(parseInt(e.target.value))}
+      />
+      <span> + 9999999 = {hardSum}</span>
+    </div>
+  );
+};
+
+export default UseMemoDemo;
+```
+
+1. `UseMemoDemo` 컴포넌트는 함수형 컴포넌트입니다.
+2. 렌더링 경우 해당 함수가 호출됩니다.
+3. `hardCalculate` 함수가 매 렌더링마다 재호출됩니다.
+
+- `hardCalculate` 함수는 매번 99999999999번의 반복문을 거쳐야 하므로, `input` 태그에 값이 입력되고, 이 값에 9999999 값을 더한 결과를 얻기까지 오랜 시간이 소요됩니다. 현재 `input` 태그의 `value`와 `onChange` 이벤트가 발생했을 때 `state` 값을 갱신함으로써 값이 변할 때마다 재 렌더링이 발생합니다. `console.log()`를 통해 매번 `hardCalculate` 함수가 호출되는 것을 확인할 수 있습니다.
+
+이번에는 `easyCalculate` 함수와, `easyNum` `state`값을 생성해보겠습니다.
+`easyCalculate` 함수는 인자 값에 1을 더하는 간단한 계산을 하므로 `easyNum` 상태 값을 담당하는 `input` 태그에 값을 변경한 경우 딜레이 없이 재 렌더링 됨을 예측할 수 있습니다.
+
+하지만 예측과 달리 여전히 지연이 발생합니다. 그 이유는 상태값 둘 중 하나라도 변경되는 경우 `UseMemoDemo` 컴포넌트가 재 렌더링 되어 `hardSum` and `easySum` 변수에 할당된 값이 초기화됨으로 `hardCalculate` 함수가 재호출되기 때문입니다.
+
+```javascript
+import { useState } from "react";
+
+const hardCalculate = (number) => {
+  console.log("hard calculator");
+  // Takes Time
+  for (let i = 0; i < 99999999999; i++) {}
+  return number + 9999999;
+};
+
+const easyCalculate = (number) => {
+  console.log("easy calculator");
+  return number + 1;
+};
+
+const UseMemoDemo = () => {
+  const [hardNum, setHardNum] = useState(1);
+  const [easyNum, setEasyNum] = useState(1);
+
+  const hardSum = hardCalculate(hardNum);
+  const easySum = easyCalculate(easyNum);
+
+  return (
+    <div>
+      <h1>Hard Calculator</h1>
+      <input
+        type="number"
+        value={hardNum}
+        onChange={(e) => setHardNum(parseInt(e.target.value))}
+      />
+      <span> + 9999999 = {hardSum}</span>
+
+      <h1>Easy Calculator</h1>
+      <input
+        type="number"
+        value={easyNum}
+        onChange={(e) => setEasyNum(parseInt(e.target.value))}
+      />
+      <span> + 1 = {easySum}</span>
+    </div>
+  );
+};
+
+export default UseMemoDemo;
+```
+
+`easyCalculate` 함수 재호출할 때 `hardCalcualte` 함수는 재호출하지 않는 방법이 있다면 이 문제를 해결할 수 있음을 짐작할 수 있습니다. `useMemo` 함수를 이용해 `memoization(메모이제이션)`을 적용하면 이 문제를 해결할 수 있습니다.
+
+`useMemo syntax` 보았듯이, 두 번째 인자로 할당되는 의존성 배열에 `hardNum` 상태값을 할당하며 재 렌더링이 발생하더라도, `hardNum` 상태값에 변화가 없다면 `hardCalculate` 함수는 재호출하지 않고, `easyCalculate` 함수만 재호출 되도록 구현할 수 있습니다.
+
+```javascript
+import { useState, useMemo } from "react";
+
+const hardCalculate = (number) => {
+  console.log("hard calculator");
+  // Takes Time
+  for (let i = 0; i < 999999999; i++) {}
+  return number + 9999999;
+};
+
+const easyCalculate = (number) => {
+  console.log("easy calculator");
+  return number + 1;
+};
+
+const UseMemoDemo = () => {
+  const [hardNum, setHardNum] = useState(1);
+  const [easyNum, setEasyNum] = useState(1);
+
+  //   const hardSum = hardCalculate(hardNum);
+  const hardSum = useMemo(() => hardCalculate(hardNum), [hardNum]);
+  const easySum = easyCalculate(easyNum);
+
+  return (
+    <div>
+      <h1>Hard Calculator</h1>
+      <input
+        type="number"
+        value={hardNum}
+        onChange={(e) => setHardNum(parseInt(e.target.value))}
+      />
+      <span> + 9999999 = {hardSum}</span>
+
+      <h1>Easy Calculator</h1>
+      <input
+        type="number"
+        value={easyNum}
+        onChange={(e) => setEasyNum(parseInt(e.target.value))}
+      />
+      <span> + 1 = {easySum}</span>
+    </div>
+  );
+};
+
+export default UseMemoDemo;
+```
+
+`hardNum` 상태값을 담당하는 `input` 값 변경 시 `hardCalculate` and `easyCalculate` 함수 모두 호출되는 것을 콘솔을 통해 확인할 수 있습니다. 하지만 `easyNum` 상태값을 담당하는 `input` 값 변경 시 `easyCalculate` 함수만 호출되어 `easy calculator`만 콘솔에 출력되는 것을 확인할 수 있습니다.
+
+### useMemo Demo2
+
+```javascript
+import { useState, useEffect } from "react";
+
+const useMemoDemo = () => {
+  const [num, setNum] = useState(0);
+  const [isKorea, setIsKorea] = useState(true);
+
+  const location = isKorea ? "한국" : "외국";
+
+  useEffect(() => {
+    console.log("useEffect is called...");
+  }, [location]);
+
+  return (
+    <div>
+      <h1>How Often Should You Eat?</h1>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <hr />
+      <h2>What country are you in right now?</h2>
+      <p>Country: {location}</p>
+      <button onClick={() => setIsKorea(!isKorea)}>Take on a flight</button>
+    </div>
+  );
+};
+
+export default useMemoDemo;
+```
+
+`useMemoDemo` 컴포넌트에는 `num` and `isKorea` 두 개의 상태 값이 존재합니다. `useEffect` 함수는 최초 렌더링에 한 번 호출되고, 의존성 값으로 `location` 값이 할당되었기 때문에, `num` 상태 값을 변경해도 `useEffect` 함수는 재호출 되지 않고, 버튼을 눌러 `isKorea` 상태 값을 변경했을 때 `location`값이 변경되면서 `useEffect` 함수가 재호출 되는 것을 확인할 수 있습니다.
+
+하지만 여기서 문제는 `useEffect` 함수의 의존성 배열에 전달한 값이 문자열과 같은 원시형 자료 구조가 아닌 객체와 같은 참조형 자료구조 라면 상황이 달라집니다.
+
+```javascript
+import { useState, useEffect } from "react";
+
+const useMemoDemo = () => {
+  const [num, setNum] = useState(0);
+  const [isKorea, setIsKorea] = useState(true);
+
+  const location = {
+    country: isKorea ? "한국" : "외국",
+  };
+
+  useEffect(() => {
+    console.log("useEffect is called...");
+  }, [location]);
+
+  return (
+    <div>
+      <h1>How Often Should You Eat?</h1>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <hr />
+      <h2>What country are you in right now?</h2>
+      <p>Country: {location.country}</p>
+      <button onClick={() => setIsKorea(!isKorea)}>Take on a flight</button>
+    </div>
+  );
+};
+
+export default useMemoDemo;
+```
+
+최초 렌더링에 `useEffect` 함수가 호출되고, 버튼을 눌러 `isKorea` 상태값이 변경되었을 때만 `location` 값이 변경되면서 `useEffect` 함수가 호출되어야 함에도, `input` 값에 변화를 주었을 때도 `useEffect` 함수가 호출됩니다.
+
+**Tips**
+
+1. 원시(Primitive) 타입
+
+- String, Number, Boolean
+- Null, Undefined, BigInt, Symbol
+- 원시 타입의 데이터는 변수를 정의하면 변수 이름의 상자에 바로 값이 저장됩니다.
+
+```javascript
+const a = "korea";
+const b = "korea";
+
+a === b; // true
+```
+
+2. 객체(Object) 타입
+
+- 원시 타입을 제외한 모든 것
+- Object, Array
+- 객체 타입의 데이터는 크기가 크기 때문에 바로 변수에 할당되는 것이 아닌 메모리가 할당되고, 그 변수에는 메모리값이 할당됩니다.
+
+```javascript
+const a = { country: "korea" };
+const b = { country: "korea" };
+
+a === b; // false
+```
+
+`num` 상태 값을 변경하면 컴포넌트 전체가 다시 그려지고, `location` 변수에는 객체를 저장할 새로운 메모리 주소가 할당되기 때문에 `useEffect` 함수가 재호출됩니다. `useMemo` 함수를 이용해 `memoization (메모이제이션)`을 구현해 이 문제를 해결할 수 있습니다.
+
+컴포넌트가 렌더링 될 때, `location` 변수에 담긴 값이 초기화되는 것을 방지해보겠습니다.
+
+```javascript
+import { useState, useEffect, useMemo } from "react";
+
+const useMemoDemo = () => {
+  const [num, setNum] = useState(0);
+  const [isKorea, setIsKorea] = useState(true);
+
+  //   const location = {
+  //     country: isKorea ? "한국" : "외국",
+  //   };
+
+  const location = useMemo(() => {
+    return {
+      country: isKorea ? "한국" : "외국",
+    };
+  }, [isKorea]);
+
+  useEffect(() => {
+    console.log("useEffect is called...");
+    // Something takes long time...
+  }, [location]);
+
+  return (
+    <div>
+      <h1>How Often Should You Eat?</h1>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <hr />
+      <h2>What country are you in right now?</h2>
+      <p>Country: {location.country}</p>
+      <button onClick={() => setIsKorea(!isKorea)}>Take on a flight</button>
+    </div>
+  );
+};
+
+export default useMemoDemo;
+```
+
+`Memoization(메모이제이션)`을 추가하고 난 뒤 다시 `input` 값을 변경해도 `location` 값이 변경되지 않고, `useEffect` 함수가 재호출되지 않는 것을 확인할 수 있습니다.
+
+## useCallback
+
+`useCallback` 함수 또한 `useMemo` 함수와 같이 컴포넌트 최적화에 사용되는 함수입니다.
+
+`useCallback` 함수는 `useMemo`와 유사하지만, 차이점은 `useCallback` 함수는 첫번째 인자로 전달 받은 콜백 함수 전체를 `memoization(메모이제이션)`하는 도구입니다.
+
+```javascript
+const calculate = useCallback(
+  (num) => {
+    return num + 1;
+  },
+  [item]
+);
+```
+
+`useCallback` 함수의 첫번째 인자 전체를 `memoization(메모이제이션)` 한다고 생각할 수 있습니다. 즉 해당 콜백 함수가 필요할 때 마다, 새로 생성하는 것이 아닌, 필요할 때마다 메모리에서 가져와 재사용하는 방식입니다.
+
+```javascript
+const calculate = (num) => {
+  return num + 1;
+};
+```
+
+`javascript`에서 함수는 객체로 간주됩니다. `calculate` 변수에는 `arrow function` 형태의 객체가 할당된 것으로 간주할 수 있습니다.
+
+```javascript
+function Component() {
+  const calculate = (num) => {
+    return num + 1;
+  };
+}
+```
+
+1. 함수형 컴포넌트는 함수다.
+2. 함수형 컴포넌트가 렌더링 된다는 것은 함수가 호출되는 것이다.
+3. 함수가 호출될 때는 모든 내부 변수가 초기화된다.
+
+`Component` 함수가 렌더링 될 때마다, `calculate` 변수는 초기화되기 때문에 새로 만들어진 함수 객체를 할당받게 된다. 만약에 `calculate` 변수에 할당하는 함수 객체 전체를 `useCallback` 함수로 감싸주면 컴포넌트가 다시 렌더링 되더라도, `calcualte` 변수가 초기화되는 것을 방지할 수 있습니다. 이 말은 컴포넌트가 최초 렌더링 시점에만 함수 객체가 생성되고, 그 이후 렌더링 발생 시 메모리에 저장해 둔 것을 가져다 쓰는 방식으로 동작합니다.
+
+```javascript
+function Component() {
+  const calculate = useCallback(
+    (num) => {
+      return num + 1;
+    },
+    [item]
+  );
+
+  return <div>{value}</div>;
+}
+```
+
+```javascript
+// useCallback Syntax
+
+useCallback(() => {
+  return value;
+}, [item]);
+```
+
+- 첫번째 인자는 `memoization(메모이제이션)` 할 콜백 함수를 받습니다.
+- 두번째 인자는 의존성 배열을 받습니다.
+
+```javascript
+const calculate = useCallback(
+  (num) => {
+    return num + 1;
+  },
+  [item]
+);
+```
+
+`useCallback` 함수로 함수를 감싸주면, `calculate` 변수에는 `memoization(메모이제이션)` 된 함수가 할당됩니다. 이후 두 번째 인자인 의존성 배열의 할당한 값이 변경되지 않는 이상 다시 초기화되지 않습니다.
+
+### useCallback Demo1
+
+```javascript
+import { useState, useEffect } from "react";
+
+const UseCallbackDemo = () => {
+  const [num, setNum] = useState(0);
+
+  const someFunction = () => {
+    console.log(`Some Function: number: ${num}`);
+    return;
+  };
+
+  useEffect(() => {
+    console.log("someFunction is changed...");
+  }, [someFunction]);
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <br />
+      <button onClick={someFunction}>Call someFunc</button>
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+코드를 확인해보면 `useEffect` 함수의 의존성 배열에 `someFunction` 변수가 할당되었기 때문에, `num` 상태 값을 변경하는 `input` 값을 변경해도 `useEffect` 함수 재호출이 없을 것으로 기대됩니다.
+
+하지만 코드를 실행해보면, `input` 값을 변경할 때마다, `useEffect` 함수가 호출되는 것을 확인할 수 있습니다.
+
+1. 함수형 컴포넌트는 함수다.
+2. 함수형 컴포넌트가 렌더링 된다는 것은 함수가 호출되는 것이다.
+3. 함수가 호출될 때는 모든 내부 변수가 초기화된다.
+
+위 단계에 따라 상태 값이 변경되었을 때, 함수 내부 변수가 초기화되기 때문에, `someFunction` 변수에는 새로운 함수 객체가 할당되게 됩니다. 객체는 원시형 자료구조와 달리 새로운 메모리에 저장하고, 메모리 주소를 변수에 할당하는 방식으로 동작하기 때문에 `someFuncion` 변수에 할당된 값이 이전과 달라진 것으로 간주해 `useEffect` 함수가 호출됩니다.
+
+재 렌더링이 발생 시 `someFuncion` 변수에 새로운 메모리 할당을 방지하고 싶은 경우 `useCallback` 함수를 이용할 수 있습니다. `useMemo` 함수와 차이가 있다면 `useCallback`은 함수 전체를 `memoization(메모이제이션)` 한다는 특징을 가지고 있습니다.
+
+```javascript
+import { useState, useEffect, useCallback } from "react";
+
+const UseCallbackDemo = () => {
+  const [num, setNum] = useState(0);
+
+  const someFunction = useCallback(() => {
+    console.log(`Some Function: number: ${num}`);
+    return;
+  }, []);
+
+  useEffect(() => {
+    console.log("someFunction is changed...");
+  }, [someFunction]);
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <br />
+      <button onClick={someFunction}>Call someFunc</button>
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+`useCallback` 함수를 적용해 `memoization(메모이제이션)`을 구현했습니다. 현재 `someFunction` 변수에 사용한 `useCallback` 함수의 의존성 배열에는 빈 배열을 할당했기 때문에, 최초 렌더링 이후에는 재할당이 발생하지 않습니다. 다시 테스트를 해보면 `input` 값이 변경되었음에도, `useEffect` 함수가 호출되지 않는 것을 확인할 수 있습니다.
+
+하지만 `input` 값에 5를 입력하고, `button`을 클릭하면 `someFunc: number: 0` 결과값이 출력됩니다. 그 이유는 해당 함수를 `memoization(메모이제이션)` 하는 당시의 `num` 초기값은 0인 상태이기 때문입니다. 그다음에 아무리 `someFunction` 함수를 호출해도 최초 `memoization(메모이제이션)` 된 함수를 재호출하는 것이기 때문에 `num` 값은 0으로 유지됩니다.
+
+만약 `memoization(메모이제이션)` 된 함수 또한 업데이트하고 싶다면, 두번째 의존성 배열에 함수 내부에서 사용하는 `num` 상태값을 할당하면 됩니다.
+
+```javascript
+import { useState, useEffect, useCallback } from "react";
+
+const UseCallbackDemo = () => {
+  const [num, setNum] = useState(0);
+
+  const someFunction = useCallback(() => {
+    console.log(`Some Function: number: ${num}`);
+    return;
+  }, [num]);
+
+  useEffect(() => {
+    console.log("someFunction is changed...");
+  }, [someFunction]);
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <br />
+      <button onClick={someFunction}>Call someFunc</button>
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+`input` 값이 변경될 때마다 `useEffect` 함수가 호출되고, `someFunction` 변수에도 새로운 함수 객체가 할당되는 것을 확인할 수 있습니다. 보다 더 정확한 확인을 위해 `toggle` 상태값을 추가해서 실행해 보겠습니다.
+
+```javascript
+import { useState, useEffect } from "react";
+
+const UseCallbackDemo = () => {
+  const [num, setNum] = useState(0);
+  const [toggle, setToggle] = useState(true);
+
+  const someFunction = () => {
+    console.log(`Some Function: number: ${num}`);
+    return;
+  };
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={num}
+        onChange={(e) => setNum(e.target.value)}
+      />
+      <button onClick={() => setToggle(!toggle)}>{toggle.toString()}</button>
+      <br />
+      <button onClick={someFunction}>Call someFunc</button>
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+`toggle` 상태값을 변경하는 버튼을 여러 번 클릭해도 `useEffect` 함수가 호출되지 않는 것을 확인할 수 있습니다.
+
+### useCallback demo2
+
+```javascript
+import { useState } from "react";
+import Box from "./Box";
+
+const UseCallbackDemo = () => {
+  const [size, setSize] = useState(100);
+
+  const createBoxStyle = () => {
+    return {
+      backgroundColor: "pink",
+      width: `${size}px`,
+      height: `${size}px`,
+    };
+  };
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={size}
+        onChange={(e) => setSize(e.target.value)}
+      />
+      <Box createBoxStyle={createBoxStyle} />
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+```javascript
+import { useState, useEffect } from "react";
+
+const Box = ({ createBoxStyle }) => {
+  const [style, setStyle] = useState({});
+
+  useEffect(() => {
+    console.log("Increase Box Size");
+    setStyle(createBoxStyle());
+  }, [createBoxStyle]);
+
+  return <div style={style}></div>;
+};
+
+export default Box;
+```
+
+`createBoxStyle` 변수는 `Box` 컴포넌트의 `props`로 전달됩니다. `input` 값을 변경하면 `size` 상태 값에 변경이 생기고 재 렌더링이 발생하고, `Box` 컴포넌트에 전달하는 `createBoxStyle` 변수에 할당된 값 또한 변경되기 때문에 `Box` 컴포넌트에 변경된 `props`가 전달됩니다. 이후 `props.createBoxStyle`을 기준으로 `useEffect` 함수 호출을 결정하기 때문에, `useEffect` 함수가 호출되면서 `createBoxStyle` 함수를 실행시켜, `style` 상태 값에 반영합니다.
+
+```javascript
+import { useState } from "react";
+import Box from "./Box";
+
+const UseCallbackDemo = () => {
+  const [size, setSize] = useState(100);
+  const [isDark, setIsDark] = useState(false);
+
+  const createBoxStyle = () => {
+    return {
+      backgroundColor: "pink",
+      width: `${size}px`,
+      height: `${size}px`,
+    };
+  };
+
+  return (
+    <div style={{ background: isDark ? "black" : "white" }}>
+      <input
+        type="number"
+        value={size}
+        onChange={(e) => setSize(e.target.value)}
+      />
+      <button onClick={() => setIsDark(!isDark)}>Change Theme</button>
+      <Box createBoxStyle={createBoxStyle} />
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+이번에는 `isDark` 상태 값을 추가하고, 버튼 클릭시 `isDark` 상태 값을 변경해 컴포넌트를 재 렌더링해보겠습니다. 이 경우 `createBoxStyle` 변수에 담긴 값은 변경되지 않았음에도 여전히 재 렌더링 되는 것을 확인할 수 있습니다. 그 이유는 앞서 설명한 것처럼, `createBoxStyle` 변수에 할당된 함수 객체가 매번 새로운 메모리 주소 값을 가지기 때문입니다.
+
+```javascript
+import { useCallback, useState } from "react";
+import Box from "./Box";
+
+const UseCallbackDemo = () => {
+  const [size, setSize] = useState(100);
+  const [isDark, setIsDark] = useState(false);
+
+  const createBoxStyle = useCallback(() => {
+    return {
+      backgroundColor: "pink",
+      width: `${size}px`,
+      height: `${size}px`,
+    };
+  }, [size]);
+
+  return (
+    <div style={{ background: isDark ? "black" : "white" }}>
+      <input
+        type="number"
+        value={size}
+        onChange={(e) => setSize(e.target.value)}
+      />
+      <button onClick={() => setIsDark(!isDark)}>Change Theme</button>
+      <Box createBoxStyle={createBoxStyle} />
+    </div>
+  );
+};
+
+export default UseCallbackDemo;
+```
+
+`useCallback` 함수를 이용해 이 문제를 해결할 수 있습니다. `size` 상태 값이 변경되었을 때만 `createBoxStyle` 변수에 할당된 함수를 재할당 하게 됩니다. 다른 상태값 변화로 컴포넌트가 재 렌더링 되었음에도, `size` 상태 값이 변경되지 않는 한, `createBoxStyle` 변수에는 `memoization(메모이제이션)`된 함수를 그대로 사용하게 됩니다.
+
+## Summary
+
+`useMemo`: 콜백 함수의 리턴 값 저장.
+`useCallback`: 콜백 함수 정의를 저장.
+
+- https://www.youtube.com/watch?v=oqUgcxwrnSY&list=PLZ5oZ2KmQEYjwhSxjB_74PoU6pmFzgVMO&index=10
