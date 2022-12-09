@@ -1,10 +1,10 @@
 import "./App.css";
-import UseCallbackDemo from "./UseCallback/UseCallbackDemoSeventh";
+import ReactMemoFirst from "./ReactMemo/ReactMemoFirst";
 
 function App() {
   return (
     <>
-      <UseCallbackDemo />
+      <ReactMemoFirst />
     </>
   );
 }

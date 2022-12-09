@@ -2098,4 +2098,321 @@ export default UseCallbackDemo;
 `useMemo`: 콜백 함수의 리턴 값 저장.
 `useCallback`: 콜백 함수 정의를 저장.
 
-- https://www.youtube.com/watch?v=oqUgcxwrnSY&list=PLZ5oZ2KmQEYjwhSxjB_74PoU6pmFzgVMO&index=10
+## useMemo and useCallback 함수를 활용한 재 렌더링 방지
+
+```javascript
+const Student = ({ name, age, address }) => {
+  return (
+    <div>
+      <h1>{name}</h1>
+      <span>{age}</span>
+      <span>{address}</span>
+    </div>
+  );
+};
+```
+
+```javascript
+const School = (props) => {
+  return <Student name={"홍길동"} age={20} address={"집"} />;
+};
+```
+
+`School` 컴포넌트는 `Student` 컴포넌트를 자식으로 가지고 있습니다. 리엑트에서는 부모 컴포넌트가 렌더링 되면 모든 자식 컴포넌트 또한 렌더링 됩니다. `Student`는 `name, age, address` 등 항상 같은 `props`를 받습니다. 이 말은 `name, age, address` 값에 변화가 없는 이상 같은 결과를 보여줍니다.
+
+만약 `School` 컴포넌트가 자주 렌더링 된다면, `Student` 컴포넌트 결과에 변호가 없음에도 다시 렌더링 되게 됩니다. 만약 `Student` 컴포넌트가 렌더링 될 때마다 성적표를 가져오는 등 앱의 성능에 영향을 미치는 연산을 실행해야 하는 경우 `Student` 컴포넌트의 렌더링 횟수를 제한해야 할 필요가 있습니다.
+
+여기서 `Student` 컴포넌트가 받는 `props` 값이 변경되는 경우에만 렌더링하게 만든다면 훨씬 효율적이지 않은가 생각해 볼 수 있습니다. `React.memo` 함수를 사용하면 이 시나리오를 구현할 수 있습니다.
+
+`React.memo` 함수는 리엑트에서 제공하는 `Higher Order Component(HOC: 고차컴포넌트)`로써 기존의 컴포넌트를 받아 새로운 혹은 최적화된 컴포넌트를 반환해주는 방식으로 동작합니다.
+
+HOC: 보통 컴포넌트 ===> `React.memo` ===> 최적화된 컴포넌트
+Ex): <Student /> ===> `React.memo` ===> <Student /> (Prop Check)
+
+`School` and `Student` 컴포넌트에 `React.memo` 상황을 적용해보면
+
+- 렌더링O: `name, age, address`중 변화가 있는 경우
+- 렌더링X, 재사용O: `name, age, address` 값에 변화가 없는 경우
+
+`React.memo` Use Cases
+
+1. 컴포넌트가 같은 Props로 자주 렌더링 될 때
+2. 컴포넌트가 렌더링 될 때마다 복잡한 로직 및 연산을 처리할 때
+
+`React.memo`는 오직 Props 변화에만 의존하는 최적화 방법입니다. `useReducer`, `useCallback`, `useState` 등과 같이 상태값 변경으로 인한 렌더링에는 여전히 영향을 받음을 기억해야 합니다.
+
+### React.memo Demo1
+
+```javascript
+import { useState } from "react";
+import Child from "./Child";
+
+const UseMemoOpt = () => {
+  const [parentAge, setParentAge] = useState(0);
+  const [childAge, setChildAge] = useState(0);
+
+  const incrementParentAge = () => {
+    setParentAge(parentAge + 1);
+  };
+
+  const incrementChildAge = () => {
+    setChildAge(childAge + 1);
+  };
+
+  console.log("Parent Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid navy", padding: "10px" }}>
+      <h1>Parent</h1>
+      <p>age: {parentAge}</p>
+      <button onClick={incrementParentAge}>Increase Parent Age</button>
+      <button onClick={incrementChildAge}>Increase Child Age</button>
+      <Child name="홍길동" age={childAge} />
+    </div>
+  );
+};
+
+export default UseMemoOpt;
+```
+
+```javascript
+const Child = ({ name, age }) => {
+  console.log("Child Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid powderblue", padding: "10px" }}>
+      <h3>Child</h3>
+      <p>name: {name}</p>
+      <p>age: {age}</p>
+    </div>
+  );
+};
+
+export default Child;
+```
+
+`UseMemoOpt` 컴포넌트의 자식 요소로 `Child` 컴포넌트가 배치돼있습니다. 이는 `UseMemoOpt` 컴포넌트가 렌더링 되면 `Child` 컴포넌트 또한 렌더링 됨을 의미합니다. `Child` 컴포넌트는 `name`, `age`를 `props`로 전달받습니다. (만약 콘솔에 각각 두 번씩 출력된다면 `React.StrictMode` 컴포넌트를 제거하면됩니다. 단, `StrictMode`는 개발시 오류 체크 등에 도움이 되기 때문에 켜두는 것을 추천해 드립니다.)
+
+리엑트 컴포넌트는 자신의 `state` 값이 업데이트 될 때마다 렌더링이 발생합니다. 현재 시나리오에서는 `parentAge` or `childAge` 상태값이 업데이트 될 때마다 렌더링이 발생하고, 자식 컴포넌트로 배치된 `Child` 컴포넌트에도 렌더링이 발생합니다. 콘솔을 통해 렌더링 상태를 확인할 수 있습니다.
+
+`Child` 컴포넌트가 부모 컴포넌트가 전달해주는 `props`는 `childAge` 상태값입니다. 그럼에도 `parentAge` 값이 변화되었을 때도 렌더링 되는 특성 때문에 `Child` 컴포넌트에도 렌더링이 발생합니다. `Child` 컴포넌트는 `props`로 받는 `name` and `age` 값이 변경되지 않는 한 재 렌더링 될 필요가 없는 컴포넌트입니다. `React.memo` 함수를 사용하면 두 값이 변경되었을 때만 렌더링 되도록 정의함으로써 이 문제를 해결할 수 있습니다.
+
+```javascript
+import { memo } from "react";
+
+const Child = ({ name, age }) => {
+  console.log("Child Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid powderblue", padding: "10px" }}>
+      <h3>Child</h3>
+      <p>name: {name}</p>
+      <p>age: {age}</p>
+    </div>
+  );
+};
+
+export default memo(Child);
+```
+
+`Child` 컴포넌트를 `React.memo` 함수로 감싸게 되면, `props` 값이 변경되었을 때만 렌더링 되도록 구현할 수 있습니다. `increase parent age` 버튼을 클릭하면 부모 컴포넌트 콘솔만 출력되고, 자식 컴포넌트 콘솔은 출력되지 않는 것을 확인할 수 있습니다.
+
+`React.memo`는 리엑트에서 제공하는 `고차컴포넌트(HOC)` 중 하나입니다. 컴포넌트를 인자로 받아서 다른 컴포넌트를 반환해줍니다. 위 예시는 `Child` 컴포넌트를 인자로 받아 새로운 `Child` 컴포넌트를 반환해줍니다. `Child` 컴포넌트는 렌더링 될 시점에 항상 `props` 값을 확인하고, 값에 변경 사항이 없다면, 렌더링하지 않고, 변경이 있는 경우에만 렌더링하는 방식으로 동작합니다.
+
+## React.memo + useMemo
+
+- `React.memo`: 컴포넌트 최적화
+- `useMemo`: 값 최적화
+
+`React.memo` and `useMemo`를 함께 사용하면 더욱 더 최적화된 렌더링을 구현할 수 있습니다.
+
+```javascript
+import { useState } from "react";
+import Child from "./Child";
+
+const ReactMemoUseMemo = () => {
+  const [parentAge, setParentAge] = useState(0);
+
+  const incrementParentAge = () => {
+    setParentAge(parentAge + 1);
+  };
+
+  const name = {
+    lastName: "홍",
+    firstName: "길동",
+  };
+
+  console.log("Parent Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid navy", padding: "10px" }}>
+      <h1>Parent</h1>
+      <p>age: {parentAge}</p>
+      <button onClick={incrementParentAge}>Increase Parent Age</button>
+      <Child name={name} />
+    </div>
+  );
+};
+
+export default ReactMemoUseMemo;
+```
+
+```javascript
+const Child = ({ name }) => {
+  console.log("Child Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid powderblue", padding: "10px" }}>
+      <h3>Child</h3>
+      <p>FirstName: {name.firstName}</p>
+      <p>LastName: {name.lastName}</p>
+    </div>
+  );
+};
+
+export default Child;
+```
+
+`Child` 컴포넌트는 `memo`를 통해 최적화 되어있습니다. 그렇기 때문에 `increment parent age` 버튼을 눌러도 `props`가 변경되지 않아, `Child` 컴포넌트에 렌더링이 발생하지 않을 것으로 예측할 수 있습니다.
+
+이러한 예측과 달리 클릭시 `Child` 컴포넌트 또한 렌더링 되는 것을 확인할 수 있습니다. 그 이유는 `name` 변수에 전달 된 값은 객체이기 때문에, 함수가 호출될 때마다 값이 같아도 매번 다른 메모리 값이 할당됩니다. 그래서 `props` 관점에서는 값이 변경되었다고 간주함으로 `Child` 컴포넌트 렌더링이 발생하게 됩니다.
+
+이 경우 `useMemo` 함수의 `memoization(메모이제이션)` 방식으로 이 문제를 해결할 수 있습니다.
+
+```javascript
+import { useState, useMemo } from "react";
+import Child from "./Child";
+
+const ReactMemoUseMemo = () => {
+  const [parentAge, setParentAge] = useState(0);
+
+  const incrementParentAge = () => {
+    setParentAge(parentAge + 1);
+  };
+
+  const name = useMemo(() => {
+    return {
+      lastName: "홍",
+      firstName: "길동",
+    };
+  }, []);
+
+  console.log("Parent Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid navy", padding: "10px" }}>
+      <h1>Parent</h1>
+      <p>age: {parentAge}</p>
+      <button onClick={incrementParentAge}>Increase Parent Age</button>
+      <Child name={name} />
+    </div>
+  );
+};
+
+export default ReactMemoUseMemo;
+```
+
+`useMemo` 함수가 리턴하는 값을 `name` 변수에 할당하고, 의존성 배열로 빈 배열을 할당했기 때문에 최초 렌더링 이후에는 `name` 변수에 값 재할당이 발생하지 않기 때문에, `increase parent age` 버튼을 눌러도 `Child` 컴포넌트 렌더링이 발생하지 않습니다.
+
+값이 객체일 때 `useMemo` and `memo`를 사용하면 위와 같이 최적화된 컴포넌트를 구현할 수 있습니다.
+
+## useCallback + React.memo
+
+- `React.memo`: 컴포넌트 최적화
+- `useMemo`: 함수 최적화
+
+```javascript
+import { useState } from "react";
+import Child from "./Child";
+
+const ReactMemoUseCallback = () => {
+  const [parentAge, setParentAge] = useState(0);
+
+  const incrementParentAge = () => {
+    setParentAge(parentAge + 1);
+  };
+
+  const tellMe = () => {
+    console.log("I love 홍길동");
+  };
+
+  console.log("Parent Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid navy", padding: "10px" }}>
+      <h1>Parent</h1>
+      <p>age: {parentAge}</p>
+      <button onClick={incrementParentAge}>Increase Parent Age</button>
+      <Child name={"홍길동"} tellMe={tellMe} />
+    </div>
+  );
+};
+
+export default ReactMemoUseCallback;
+```
+
+```javascript
+const Child = ({ name, tellMe }) => {
+  console.log("Child Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid powderblue", padding: "10px" }}>
+      <h3>Child</h3>
+      <p>name: {name}</p>
+      <button onClick={tellMe}>Do you love me?</button>
+    </div>
+  );
+};
+
+export default Child;
+```
+
+`ReactMemoUseCallback` 컴포넌트에 정의된 `tellMe` 함수는, 자식 컴포넌트 `Child`의 `props`로 전달됩니다. `Child` 컴포넌트는 `props`로 `name` 값과, `tellMe` 함수를 전달받습니다.
+
+부모 컴포넌트의 `Increase Parent Age` 버튼을 누르면, 부모 컴포넌트와, 자식 컴포넌트 `Child`가 렌더링 됩니다. 하지만 `Child` 컴포넌트가 `props`로 받는 `name`과 `tellMe` 함수는 업데이트되지 않았음에도 렌더링이 발생했습니다.
+
+이러한 부작용이 발생한 이유는 `tellMe`라는 `props`가 함수를 전달받고 있기 때문입니다. 앞서 소개했듯이, `JavaScript`에서 함수는 객체로 간주합니다. 그러므로 부모 컴포넌트에 정의한 `tellMe` 변수에 객체가 할당되었고, `Incrase Parent Age` 버튼을 누르면 상태 값에 업데이트가 발생하기 때문에, `tellMe` 변수에는 새로운 메모리 주소가 할당됩니다. `Child` 컴포넌트는 `memo`를 사용했음에도, 전달받은 메모리 값이 다르므로 렌더링이 발생하게됩니다.
+
+함수 `memoization(메모이제이션)`을 지원해주는 `useCallback` 함수를 사용하면 이러한 재 렌더링 문제를 방지할 수 있습니다.
+
+```javascript
+import { useState, useCallback } from "react";
+import Child from "./Child";
+
+const ReactMemoUseCallbackDemo = () => {
+  const [parentAge, setParentAge] = useState(0);
+
+  const incrementParentAge = () => {
+    setParentAge(parentAge + 1);
+  };
+
+  const tellMe = useCallback(() => {
+    console.log("I love 홍길동");
+  }, []);
+
+  console.log("Parent Component is rendered...");
+
+  return (
+    <div style={{ border: "2px solid navy", padding: "10px" }}>
+      <h1>Parent</h1>
+      <p>age: {parentAge}</p>
+      <button onClick={incrementParentAge}>Increase Parent Age</button>
+      <Child name={"홍길동"} tellMe={tellMe} />
+    </div>
+  );
+};
+
+export default ReactMemoUseCallbackDemo;
+```
+
+`useCallback` 함수의 첫 번째 인자에 기존의 `tellMe` 함수(콜백)을 전달하고, 의존성 배열로 빈 배열을 전달했기 때문에 최초 렌더링에 `tellMe` 함수 내용을 메모리에 저장하고, 이후에는 재할당하지 않고 저장된 것을 참고하는 방식으로 동작합니다.
+
+이후 `Increase Parent Age` 버튼을 클릭해도, `Child` 컴포넌트에 별도의 렌더링이 발생하지 않는 것을 확인할 수 있습니다.
+
+- `React.memo`는 오직 `Props` 변화에만 의존하는 최적화 방법입니다. 만약 컴포넌트가 `useState, useReducer, useContext` 등과 같은 상태와 관련된 함수를 사용하면 `props`에 변화가 없더라도, `state or context`가 변경될 때마다 다시 렌더링 됨을 주의해야 합니다. 그러므로 무분별한 사용은 메모리 낭비와 성능 저하로 이어질 수 있기 때문에 꼭 필요한 경우에만 사용해야 합니다.
+
+### Summary
+
+**React.memo**: 자식 컴포넌트를 메모리에 저장해, 부모 컴포넌트가 재 렌더링 되면 자식 컴포넌의 `props` 값을 확인하고 `props` 값에 변화가 없는 경우 렌러딩을 방지하는 용도.
+**useMemo**: 계산된 어떠한 값을 `memoization(메모이제이션)`을 통해 메모리에 저장하고, 의존성 배열이 변경되었을 때만 다시 계산하는 용도.
+**useCallback**: `useMemo`와 같은 맥락이지만, 값이 아닌 함수를 `memoization(메모이제이션)`하는 용도.
