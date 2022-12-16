@@ -2,7 +2,7 @@
 
 <img src="https://cdn-images-1.medium.com/max/800/1*VHt7WPCHcDm4zGahqXIEIQ.png" />
 <img src="https://cdn-images-1.medium.com/max/800/1*CsaL0FWk1N4QBRknUOvvbQ.png" />
-<img src='https://cdn-images-1.medium.com/max/800/1*ajFecloGsDEqZNUMPhER7g.png" />
+<img src="https://cdn-images-1.medium.com/max/800/1*ajFecloGsDEqZNUMPhER7g.png" />
 
 - ListGroup Component in React Bootstrap
 - Component Interface
