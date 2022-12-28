@@ -1,30 +1,32 @@
 import React from "react";
 import Form from "react-bootstrap/Form";
-import Joi from "joi";
 import FormComp from "./common/FormComp";
+import Joi from "joi";
 
-class LoginForm extends FormComp {
+class RegisterForm extends FormComp {
   state = {
-    data: { username: "", password: "" },
+    data: { username: "", password: "", name: "" },
     errors: {},
   };
 
   schema = Joi.object({
-    username: Joi.string().required().label("Username"),
-    password: Joi.string().required().label("Password"),
+    username: Joi.string()
+      .email({ tlds: { allow: false } })
+      .required()
+      .label("Username"),
+    password: Joi.string().required().min(5).label("Password"),
+    name: Joi.string().required().label("Name"),
   });
 
   doSubmit = () => {
     // Call the server
-    console.log("Submitted!");
+    console.log("Submitted");
   };
 
   render() {
-    console.log(this.state);
-
     return (
       <div className="container">
-        <h1>Login</h1>
+        <h1>Register</h1>
         <Form onSubmit={this.handleSubmit}>
           {this.renderInput(
             "username",
@@ -38,11 +40,12 @@ class LoginForm extends FormComp {
             "formBasicPassword",
             "password"
           )}
-          {this.renderButton("Login")}
+          {this.renderInput("name", "Name", "formBasicName", "text")}
+          {this.renderButton("Register")}
         </Form>
       </div>
     );
   }
 }
 
-export default LoginForm;
+export default RegisterForm;

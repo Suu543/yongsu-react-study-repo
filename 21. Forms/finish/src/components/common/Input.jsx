@@ -12,21 +12,10 @@ const Input = ({ controlId, label, value, error, onChange, name, type }) => {
         autoFocus
         type={type}
         name={name}
-        placeholder="Enter Username"
       />
       {error && <Alert variant="danger">{error}</Alert>}
     </Form.Group>
   );
 };
-
-// const Input = ({ controlId, label, error, ...rest }) => {
-//   return (
-//     <Form.Group className="mb-3" controlId={controlId}>
-//       <Form.Label>{label}</Form.Label>
-//       <Form.Control {...rest} autoFocus placeholder="Enter Username" />
-//       {error && <Alert variant="danger">{error}</Alert>}
-//     </Form.Group>
-//   );
-// };
 
 export default Input;

@@ -4,7 +4,9 @@ import { getGenres } from "../services/fakeGenreService";
 import ListGroup from "./common/ListGroupComp";
 import PaginationComp from "./common/PaginationComp";
 import { paginate } from "../utils/paginate";
+import { Link } from "react-router-dom";
 import MoviesTable from "./MoviesTable";
+import SearchBox from "./common/SearchBox";
 import _ from "lodash";
 
 class Movies extends Component {
@@ -16,6 +18,7 @@ class Movies extends Component {
       pageSize: 4,
       currentPage: 1,
       selectedGenre: "",
+      searchQuery: "",
       sortColumn: { path: "title", order: "asc" },
     };
   }
@@ -56,6 +59,10 @@ class Movies extends Component {
     this.setState({ sortColumn });
   };
 
+  handleSearch = (query) => {
+    this.setState({ searchQuery: query, selectedGenre: null, currentPage: 1 });
+  };
+
   getPagedData = () => {
     const {
       selectedGenre,
@@ -63,12 +70,17 @@ class Movies extends Component {
       sortColumn,
       currentPage,
       movies: allMovies,
+      searchQuery,
     } = this.state;
 
-    const filtered =
-      selectedGenre && selectedGenre._id
-        ? allMovies.filter((m) => m.genre._id === selectedGenre._id)
-        : allMovies;
+    // 검색 로직
+    let filtered = allMovies;
+    if (searchQuery)
+      filtered = allMovies.filter((m) =>
+        m.title.toLowerCase().startsWith(searchQuery.toLowerCase())
+      );
+    else if (selectedGenre && selectedGenre._id)
+      filtered = allMovies.filter((m) => m.genre._id === selectedGenre._id);
 
     const sorted = _.orderBy(filtered, [sortColumn.path], [sortColumn.order]);
 
@@ -79,8 +91,14 @@ class Movies extends Component {
 
   render() {
     const { length: count } = this.state.movies;
-    const { pageSize, currentPage, selectedGenre, genres, sortColumn } =
-      this.state;
+    const {
+      pageSize,
+      currentPage,
+      selectedGenre,
+      genres,
+      sortColumn,
+      searchQuery,
+    } = this.state;
 
     if (count === 0)
       return <p>모든 영화가 삭제되었습니다 (영화가 존재하지 않습니다).</p>;
@@ -98,7 +116,15 @@ class Movies extends Component {
             />
           </div>
           <div className="col">
+            <Link
+              className="btn btn-primary"
+              to="/movies/new"
+              style={{ marginBottom: "20px" }}
+            >
+              New Movie
+            </Link>
             <p>현재 {totalCount}개 영화가 존재합니다.</p>
+            <SearchBox value={searchQuery} onChange={this.handleSearch} />
             <MoviesTable
               movies={movies}
               onLike={this.handleLike}

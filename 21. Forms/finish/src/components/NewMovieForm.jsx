@@ -1,12 +1,12 @@
 import React from "react";
-import FormComp from "./common/FormComp";
-import withRouter from "../hoc/withRouter";
 import Form from "react-bootstrap/Form";
 import Joi from "joi";
+import FormComp from "./common/FormComp";
 import { getGenres } from "../services/fakeGenreService";
+import withRouter from "../hoc/withRouter";
 import { saveMovie, getMovie } from "../services/fakeMovieService";
 
-class MovieForm extends FormComp {
+class NewMovieForm extends FormComp {
   state = {
     data: { title: "", genreId: "", numberInStock: "", dailyRentalRate: "" },
     errors: {},
@@ -20,8 +20,8 @@ class MovieForm extends FormComp {
     numberInStock: Joi.number()
       .required()
       .min(0)
-      .max(100)
-      .label("Number in Stock"),
+      .max(1000)
+      .label("Number In Stock"),
     dailyRentalRate: Joi.number()
       .required()
       .min(0)
@@ -33,10 +33,11 @@ class MovieForm extends FormComp {
     const genres = getGenres();
     this.setState({ genres });
 
-    const { movieId } = this.props.params;
+    const movieId = this.props.location.pathname.split("/")[2];
     if (movieId === "new") return;
 
     const movie = getMovie(movieId);
+
     this.setState({ data: this.mapToViewModel(movie) });
   }
 
@@ -61,24 +62,14 @@ class MovieForm extends FormComp {
         <h1>Movie Form</h1>
         <Form onSubmit={this.handleSubmit}>
           {this.renderInput("title", "Title", "formBasicTitle", "text")}
-          {this.renderSelect(
-            "genreId",
-            "Genre",
-            "formBasicGenre",
-            this.state.genres
-          )}
+          {this.renderSelect("genreId", "Genre", "formBasicGenre", this.state.genres)}
           {this.renderInput(
             "numberInStock",
             "Number In Stock",
             "formBasicNumberInStock",
             "number"
           )}
-          {this.renderInput(
-            "dailyRentalRate",
-            "Rate",
-            "formBasicRate",
-            "number"
-          )}
+          {this.renderInput("rate", "Rate", "formBasicRate", "number")}
           {this.renderButton("Save")}
         </Form>
       </div>
@@ -86,4 +77,4 @@ class MovieForm extends FormComp {
   }
 }
 
-export default withRouter(MovieForm);
+export default withRouter(NewMovieForm);

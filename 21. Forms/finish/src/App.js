@@ -10,6 +10,7 @@ import Movies from "./components/Movies";
 import NavBar from "./components/NavBar";
 import MovieForm from "./components/MovieForm";
 import LoginForm from "./components/LoginForm";
+import RegisterForm from "./components/RegisterForm";
 
 class App extends Component {
   render() {
@@ -18,11 +19,12 @@ class App extends Component {
         <NavBar />
         <Routes>
           <Route path="/" element={<Navigate replace to="/movies" />} />
-          <Route path="movies" element={<Movies />} />
-          <Route path=":movieId" element={<MovieForm />} />
+          <Route path="/movies" element={<Movies />} />
+          <Route path="/movies/:movieId" element={<MovieForm />} />
           <Route path="customers" element={<Customers />} />
           <Route path="rentals" element={<Rentals />} />
           <Route path="login" element={<LoginForm />} />
+          <Route path="register" element={<RegisterForm />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

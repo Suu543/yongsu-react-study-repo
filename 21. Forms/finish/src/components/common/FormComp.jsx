@@ -2,6 +2,7 @@ import { Component } from "react";
 import Button from "react-bootstrap/Button";
 import Joi from "joi";
 import Input from "./Input";
+import Select from "./Select";
 
 class FormComp extends Component {
   state = {
@@ -10,6 +11,7 @@ class FormComp extends Component {
   };
 
   handleChange = ({ currentTarget: input }) => {
+    console.log("input: ", input);
     const errors = { ...this.state.errors };
     const errorMessage = this.validateProperty(input);
 
@@ -27,6 +29,8 @@ class FormComp extends Component {
     console.log("validate result: ", result);
 
     if (!result.error) return null;
+
+    console.log("aaa");
 
     const errors = {};
 
@@ -54,9 +58,11 @@ class FormComp extends Component {
   };
 
   renderButton(label) {
-    <Button disabled={this.validate()} variant="primary" type="submit">
-      {label}
-    </Button>;
+    return (
+      <Button disabled={this.validate()} variant="primary" type="submit">
+        {label}
+      </Button>
+    );
   }
 
   renderInput(name, label, controlId, type = "text") {
@@ -69,6 +75,22 @@ class FormComp extends Component {
         value={data[name]}
         type={type}
         name={name}
+        onChange={this.handleChange}
+        error={errors[name]}
+      />
+    );
+  }
+
+  renderSelect(name, label, controlId, options) {
+    const { data, errors } = this.state;
+
+    return (
+      <Select
+        controlId={controlId}
+        name={name}
+        value={data[name]}
+        label={label}
+        options={options}
         onChange={this.handleChange}
         error={errors[name]}
       />
