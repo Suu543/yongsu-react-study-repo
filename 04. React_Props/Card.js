@@ -4,7 +4,7 @@ function Card(props) {
       <div className="col s2">
         <div className="card hoverable small">
           <div className="card-image">
-            <img src="http://lorempixel.com/400/400/nature/" />
+            <img src="https://www.santarosaforward.com/img/managed/Image/111/file.jpg" />
           </div>
           <div className="card-content">
             <p>{props.title}</p>

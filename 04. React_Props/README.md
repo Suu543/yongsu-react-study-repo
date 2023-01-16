@@ -1,14 +1,11 @@
 # React Props
 
-`react`에서 `HTML`을 리턴하는 함수를 `component`라 칭한다. 이런 `component` 함수를 호출할 때는 `<Component />` 방식으로 호출하고, 이름은 `HTML`과 구분하기 위해 첫 번째 글자는 대문자로 정의해야 한다. 
+`react`에서 `HTML`을 리턴하는 함수를 `component`라 칭한다. 이런 `component` 함수를 호출할 때는 `<Component />` 방식으로 호출하고, 이름은 `HTML`과 구분하기 위해 첫 번째 글자는 대문자로 정의해야 한다.
 
 이런 `component` 또한 함수이기 때문에 인자를 받을 수 있다. `인자 혹은 속성(attribute)`를 주기 위해서는 다음과 같이 정의해야 한다.
+
 ```javascript
-<Card 
-    key1={value1}
-    key2={value2}
-    key3={value3}
-/>
+<Card key1={value1} key2={value2} key3={value3} />
 ```
 
 ```javascript
@@ -19,7 +16,7 @@ function Card(props) {
       <div className="col s2">
         <div className="card hoverable small">
           <div className="card-image">
-            <img src="http://lorempixel.com/400/400/nature/" />
+            <img src="https://www.santarosaforward.com/img/managed/Image/111/file.jpg" />
           </div>
           <div className="card-content">
             <p>{props.title}</p>
@@ -34,8 +31,10 @@ function Card(props) {
   );
 }
 ```
+
 `Component`는 인자 값을 받을 때 일반적으로 `props(properties)`라는 이름을 이용해 받는다. `props`를 `객체(object)` 형태를 띠기 때문에 `key: value` 방식으로 값에 접근할 수 있다.
 <img src="https://cdn-images-1.medium.com/max/1000/1*sSGS2gQSymtdhakXgLzTfQ.png" />
+
 ```javascript
 // data.js
 const data = [
@@ -77,13 +76,18 @@ const data = [
 
     <script
       crossorigin
-      src="https://unpkg.com/react@16/umd/react.production.min.js"
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
     ></script>
     <script
       crossorigin
-      src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
     ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"
+      integrity="sha512-kp7YHLxuJDJcOzStgd6vtpxr4ZU9kjn77e6dBsivSz+pUuAuMlE2UTdKB7jjsWT84qbS8kdCWHPETnP/ctrFsA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script src="./Card.js" type="text/babel"></script>
     <script src="./data.js"></script>
   </head>
@@ -91,11 +95,10 @@ const data = [
     <div id="root"></div>
 
     <script type="text/babel">
-      // takes 2 args:
-      // 1. what - a react element
-      // 2. where
+      const container = document.getElementById("root");
+      const root = ReactDOM.createRoot(container);
 
-      ReactDOM.render(
+      root.render(
         <div>
           <Card
             title={data[0].course}
@@ -117,11 +120,9 @@ const data = [
             name={data[3].instructor}
             price={data[3].price}
           />
-        </div>,
-        document.getElementById("root")
+        </div>
       );
     </script>
   </body>
 </html>
 ```
-

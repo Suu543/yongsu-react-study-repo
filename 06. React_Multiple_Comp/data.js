@@ -2,37 +2,31 @@ const data = [
   {
     course: "React from the beginning",
     instructor: "Yongsu Jeong",
-    image:
-      "https://pbs.twimg.com/profile_images/1455185376876826625/s1AjSxph_400x400.jpg",
+    image: "https://www.santarosaforward.com/img/managed/Image/111/file.jpg",
   },
   {
     course: "React from the beginning",
     instructor: "Yongsu Jeong",
-    image:
-      "https://pbs.twimg.com/profile_images/1455185376876826625/s1AjSxph_400x400.jpg",
+    image: "https://www.santarosaforward.com/img/managed/Image/111/file.jpg",
   },
   {
     course: "React from the beginning",
     instructor: "Yongsu Jeong",
-    image:
-      "https://pbs.twimg.com/profile_images/1455185376876826625/s1AjSxph_400x400.jpg",
+    image: "https://www.santarosaforward.com/img/managed/Image/111/file.jpg",
   },
   {
     course: "React from the beginning",
     instructor: "Yongsu Jeong",
-    image:
-      "https://pbs.twimg.com/profile_images/1455185376876826625/s1AjSxph_400x400.jpg",
+    image: "https://www.santarosaforward.com/img/managed/Image/111/file.jpg",
   },
   {
     course: "React from the beginning",
     instructor: "Yongsu Jeong",
-    image:
-      "https://pbs.twimg.com/profile_images/1455185376876826625/s1AjSxph_400x400.jpg",
+    image: "https://www.santarosaforward.com/img/managed/Image/111/file.jpg",
   },
   {
     course: "React from the beginning",
     instructor: "Yongsu Jeong",
-    image:
-      "https://pbs.twimg.com/profile_images/1455185376876826625/s1AjSxph_400x400.jpg",
+    image: "https://www.santarosaforward.com/img/managed/Image/111/file.jpg",
   },
 ];

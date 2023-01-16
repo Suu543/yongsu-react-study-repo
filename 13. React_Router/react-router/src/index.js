@@ -38,5 +38,3 @@ root.render(
     </Routes>
   </BrowserRouter>
 );
-
-// root.render(<App />);

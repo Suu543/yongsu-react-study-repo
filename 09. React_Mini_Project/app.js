@@ -7,10 +7,12 @@
 //   document.getElementById("root")
 // );
 
-ReactDOM.render(
+const container = document.getElementById("root");
+const root = ReactDOM.createRoot(container);
+
+root.render(
   <div className="container cities">
-    <CitiesContainerFunc data={data} />
-    <CitiesContainerFunc data={data2} />
-  </div>,
-  document.getElementById("root")
+    <CitiesContainer data={data} />
+    <CitiesContainer data={data2} />
+  </div>
 );

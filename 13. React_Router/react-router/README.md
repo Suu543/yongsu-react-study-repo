@@ -152,6 +152,7 @@ root.render(
 - `Routes` 컴포넌트에서 `Route` 컴포넌트를 중첩하여 사용합니다.
 - `URLs`의 형태를 보면 `"/" + "expenses"` and `"/" + "invoices"` 와 같이 보일 수 있습니다.
 - `App` 컴포넌트에서 `Outlet` 컴포넌트를 활용하면 `App` 컴포넌트는 그대로 렌더링 되어 있는 상태에서 클릭된 링크의 컴포넌트가 렌더링 됩니다.
+- 중첩 `params` 라우팅은 `Outlet` 사용 여부에 달려있습니다.
 
 ```javascript
 // src/App.js
@@ -293,9 +294,8 @@ export default Invoice;
 <Routes>
   <Route path="/" element={<App />}>
     <Route path="expenses" element={<Expenses />} />
-    <Route path="invoices" element={<Invoices />}>
-      <Route path=":invoiceId" element={<Invoice />} />
-    </Route>
+    <Route path="invoices" element={<Invoices />} />
+    <Route path="invoices/:invoiceId" element={<Invoice />} />
     <Route
       path="*"
       element={
@@ -360,7 +360,7 @@ export default function Invoice() {
 
 ### 7. Index Routes
 
-- `invoices` 링크를 클릭하면 해당 페이지로 넘어가고, 화면 오른편은 빈 공백이 됩니다. 이 문제를 `index route`를 통해 해결할 수 있습니다.
+- `invoices` 링크를 클릭하면 해당 페이지로 넘어가고, 화면 오른편은 빈 공백이 됩니다. 이 문제를 `index route`를 통해 해결할 수 있습니다. 현재 페이지로 잘 넘어온 지 확인의 목적으로 `index route`를 사용할 수 있습니다.
 
 ```javascript
 // src/index.js

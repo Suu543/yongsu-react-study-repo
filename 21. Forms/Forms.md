@@ -1640,6 +1640,648 @@ export default Input;
 
 ## Exercise and Solution - Register Form
 
+<img src="https://cdn-images-1.medium.com/max/800/1*UrYYDGE_EPXz_nlpUvT7Ow.png" />
+
+```javascript
+// src/components/RegisterForm.jsx
+import React from "react";
+import Form from "react-bootstrap/Form";
+import FormComp from "./common/FormComp";
+import Joi from "joi";
+
+class RegisterForm extends FormComp {
+  state = {
+    data: { username: "", password: "", name: "" },
+    errors: {},
+  };
+
+  schema = Joi.object({
+    username: Joi.string()
+      .email({ tlds: { allow: false } })
+      .required()
+      .label("Username"),
+    password: Joi.string().required().min(5).label("Password"),
+    name: Joi.string().required().label("Name"),
+  });
+
+  doSubmit = () => {
+    // Call the server
+    console.log("Submitted");
+  };
+
+  render() {
+    return (
+      <div className="container">
+        <h1>Register</h1>
+        <Form onSubmit={this.handleSubmit}>
+          {this.renderInput(
+            "username",
+            "Username",
+            "formBasicUsername",
+            "text"
+          )}
+          {this.renderInput(
+            "password",
+            "Password",
+            "formBasicPassword",
+            "password"
+          )}
+          {this.renderInput("name", "Name", "formBasicName", "text")}
+          {this.renderButton("Register")}
+        </Form>
+      </div>
+    );
+  }
+}
+
+export default RegisterForm;
+```
+
+```javascript
+// src/App.js
+import { Component } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Customers from "./components/Customer";
+import Rentals from "./components/Rentals";
+import NotFound from "./components/NotFound";
+
+import "./App.css";
+
+import Movies from "./components/Movies";
+import NavBar from "./components/NavBar";
+import MovieForm from "./components/MovieForm";
+import LoginForm from "./components/LoginForm";
+import RegisterForm from "./components/RegisterForm";
+
+class App extends Component {
+  render() {
+    return (
+      <BrowserRouter>
+        <NavBar />
+        <Routes>
+          <Route path="/" element={<Navigate replace to="/movies" />} />
+          <Route path="movies" element={<Movies />} />
+          <Route path=":movieId" element={<MovieForm />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="rentals" element={<Rentals />} />
+          <Route path="login" element={<LoginForm />} />
+          <Route path="register" element={<RegisterForm />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+}
+
+export default App;
+```
+
 ## Exercise and Solution - Movie Form
 
+1. `New Movie` 버튼을 클릭했을 때
+
+<img src="https://cdn-images-1.medium.com/max/800/1*NDuEKnc_IJyPc9NFEUx4dw.png" />
+
+2. 영화 생성 페이지
+
+<img src="https://cdn-images-1.medium.com/max/800/1*7yvfeMjjCI9U8SPZWAUIHw.png" />
+
+3. 기존 영화 업데이트 페이지 (Title 링크 클릭시)
+
+<img src="https://cdn-images-1.medium.com/max/800/1*mpNADrlAGrlCMDu3xyyfSw.png" />
+
+`Select` 태그 자동화
+
+```javascript
+// src/components/common/Select.jsx
+import React from "react";
+import Form from "react-bootstrap/Form";
+import Alert from "react-bootstrap/Alert";
+
+const Select = ({
+  controlId,
+  label,
+  value,
+  error,
+  onChange,
+  name,
+  options,
+}) => {
+  return (
+    <Form.Group className="mb-3" controlId={controlId}>
+      <Form.Label>{label}</Form.Label>
+      <Form.Select name={name} onChange={onChange} value={value}>
+        <option value="" />
+        {options.map((option) => (
+          <option key={option._id} value={option._id}>
+            {option.name}
+          </option>
+        ))}
+      </Form.Select>
+      {error && <Alert variant="danger">{error}</Alert>}
+    </Form.Group>
+  );
+};
+
+export default Select;
+```
+
+```javascript
+// src/components/common/FormComp.jsx
+import { Component } from "react";
+import Button from "react-bootstrap/Button";
+import Joi from "joi";
+import Input from "./Input";
+import Select from "./Select";
+
+class FormComp extends Component {
+  state = {
+    data: {},
+    errors: {},
+  };
+
+  handleChange = ({ currentTarget: input }) => {
+    console.log("input: ", input);
+    const errors = { ...this.state.errors };
+    const errorMessage = this.validateProperty(input);
+
+    if (errorMessage) errors[input.name] = errorMessage;
+    else delete errors[input.name];
+
+    const data = { ...this.state.data };
+    data[input.name] = input.value;
+    this.setState({ data, errors });
+  };
+
+  validate = () => {
+    const options = { abortEarly: false };
+    const result = this.schema.validate(this.state.data, options);
+    console.log("validate result: ", result);
+
+    if (!result.error) return null;
+
+    console.log("aaa");
+
+    const errors = {};
+
+    for (let item of result.error.details) errors[item.path[0]] = item.message;
+
+    return errors;
+  };
+
+  validateProperty = ({ name, value }) => {
+    const propertySchema = Joi.object({ [name]: this.schema.extract(name) });
+    const { error } = propertySchema.validate({ [name]: value });
+    return error ? error.details[0].message : null;
+  };
+
+  handleSubmit = (e) => {
+    e.preventDefault();
+
+    const errors = this.validate();
+    console.log("errors: ", errors);
+    this.setState({ errors: errors || {} });
+
+    if (errors) return;
+
+    this.doSubmit();
+  };
+
+  renderButton(label) {
+    return (
+      <Button disabled={this.validate()} variant="primary" type="submit">
+        {label}
+      </Button>
+    );
+  }
+
+  renderInput(name, label, controlId, type = "text") {
+    const { data, errors } = this.state;
+
+    return (
+      <Input
+        controlId={controlId}
+        label={label}
+        value={data[name]}
+        type={type}
+        name={name}
+        onChange={this.handleChange}
+        error={errors[name]}
+      />
+    );
+  }
+
+  renderSelect(name, label, controlId, options) {
+    const { data, errors } = this.state;
+
+    return (
+      <Select
+        controlId={controlId}
+        name={name}
+        value={data[name]}
+        label={label}
+        options={options}
+        onChange={this.handleChange}
+        error={errors[name]}
+      />
+    );
+  }
+}
+
+export default FormComp;
+```
+
+```javascript
+// src/components/MovieForm.jsx
+import React from "react";
+import FormComp from "./common/FormComp";
+import withRouter from "../hoc/withRouter";
+import Form from "react-bootstrap/Form";
+import Joi from "joi";
+import { getGenres } from "../services/fakeGenreService";
+import { saveMovie, getMovie } from "../services/fakeMovieService";
+
+class MovieForm extends FormComp {
+  state = {
+    data: { title: "", genreId: "", numberInStock: "", dailyRentalRate: "" },
+    errors: {},
+    genres: [],
+  };
+
+  schema = Joi.object({
+    _id: Joi.string(),
+    title: Joi.string().required().label("Title"),
+    genreId: Joi.string().required().label("Genre"),
+    numberInStock: Joi.number()
+      .required()
+      .min(0)
+      .max(100)
+      .label("Number in Stock"),
+    dailyRentalRate: Joi.number()
+      .required()
+      .min(0)
+      .max(10)
+      .label("Daily Rental Rate"),
+  });
+
+  componentDidMount() {
+    const genres = getGenres();
+    this.setState({ genres });
+
+    const { movieId } = this.props.params;
+    if (movieId === "new") return;
+
+    const movie = getMovie(movieId);
+    this.setState({ data: this.mapToViewModel(movie) });
+  }
+
+  mapToViewModel(movie) {
+    return {
+      _id: movie._id,
+      title: movie.title,
+      genreId: movie.genre._id,
+      numberInStock: movie.numberInStock,
+      dailyRentalRate: movie.dailyRentalRate,
+    };
+  }
+
+  doSubmit = () => {
+    saveMovie(this.state.data);
+    this.props.navigate("/movies");
+  };
+
+  render() {
+    return (
+      <div className="container">
+        <h1>Movie Form</h1>
+        <Form onSubmit={this.handleSubmit}>
+          {this.renderInput("title", "Title", "formBasicTitle", "text")}
+          {this.renderSelect(
+            "genreId",
+            "Genre",
+            "formBasicGenre",
+            this.state.genres
+          )}
+          {this.renderInput(
+            "numberInStock",
+            "Number In Stock",
+            "formBasicNumberInStock",
+            "number"
+          )}
+          {this.renderInput(
+            "dailyRentalRate",
+            "Rate",
+            "formBasicRate",
+            "number"
+          )}
+          {this.renderButton("Save")}
+        </Form>
+      </div>
+    );
+  }
+}
+
+export default withRouter(MovieForm);
+```
+
+- `MovieService` 코드 일부 수정
+
+```javascript
+// src/services/fakeMovieService.js
+import * as genresAPI from "./fakeGenreService";
+
+const movies = [
+  {
+    _id: "5b21ca3eeb7f6fbccd471815",
+    title: "Terminator",
+    genre: { _id: "5b21ca3eeb7f6fbccd471818", name: "Action" },
+    numberInStock: 6,
+    dailyRentalRate: 2.5,
+    publishDate: "2018-01-03T19:04:28.809Z",
+    liked: true,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd471816",
+    title: "Die Hard",
+    genre: { _id: "5b21ca3eeb7f6fbccd471818", name: "Action" },
+    numberInStock: 5,
+    dailyRentalRate: 2.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd471817",
+    title: "Get Out",
+    genre: { _id: "5b21ca3eeb7f6fbccd471820", name: "Thriller" },
+    numberInStock: 8,
+    dailyRentalRate: 3.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd471819",
+    title: "Trip to Italy",
+    genre: { _id: "5b21ca3eeb7f6fbccd471814", name: "Comedy" },
+    numberInStock: 7,
+    dailyRentalRate: 3.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd47181a",
+    title: "Airplane",
+    genre: { _id: "5b21ca3eeb7f6fbccd471814", name: "Comedy" },
+    numberInStock: 7,
+    dailyRentalRate: 3.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd47181b",
+    title: "Wedding Crashers",
+    genre: { _id: "5b21ca3eeb7f6fbccd471814", name: "Comedy" },
+    numberInStock: 7,
+    dailyRentalRate: 3.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd47181e",
+    title: "Gone Girl",
+    genre: { _id: "5b21ca3eeb7f6fbccd471820", name: "Thriller" },
+    numberInStock: 7,
+    dailyRentalRate: 4.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd47181f",
+    title: "The Sixth Sense",
+    genre: { _id: "5b21ca3eeb7f6fbccd471820", name: "Thriller" },
+    numberInStock: 4,
+    dailyRentalRate: 3.5,
+  },
+  {
+    _id: "5b21ca3eeb7f6fbccd471821",
+    title: "The Avengers",
+    genre: { _id: "5b21ca3eeb7f6fbccd471818", name: "Action" },
+    numberInStock: 7,
+    dailyRentalRate: 3.5,
+  },
+];
+
+export function getMovies() {
+  return movies;
+}
+
+export function getMovie(id) {
+  return movies.find((m) => m._id === id);
+}
+
+export function saveMovie(movie) {
+  let movieInDb = movies.find((m) => m._id === movie._id) || {};
+  // 수정 #1: name ==> title
+  movieInDb.title = movie.title;
+  movieInDb.genre = genresAPI.genres.find((g) => g._id === movie.genreId);
+  movieInDb.numberInStock = movie.numberInStock;
+  movieInDb.dailyRentalRate = movie.dailyRentalRate;
+
+  if (!movieInDb._id) {
+    // 수정 #2: Date.now() => Date.now().toString()
+    movieInDb._id = Date.now().toString();
+    movies.push(movieInDb);
+  }
+
+  return movieInDb;
+}
+
+export function deleteMovie(id) {
+  let movieInDb = movies.find((m) => m._id === id);
+  movies.splice(movies.indexOf(movieInDb), 1);
+  return movieInDb;
+}
+```
+
+- `react-router-dom` 활용을 위한 `Higher Order Function` 생성
+
+```javascript
+// src/hoc/withRouter.js
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+
+const withRouter = (WrappedComponent) => (props) => {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return (
+    <WrappedComponent
+      {...props}
+      params={params}
+      location={location}
+      navigate={navigate}
+    />
+  );
+};
+
+export default withRouter;
+```
+
 ## Exercise and Solution - Search Movies
+
+```javascript
+// src/components/common/SearchBox.jsx
+const SearchBox = ({ value, onChange }) => {
+  return (
+    <input
+      type="text"
+      name="query"
+      className="form-control my-3"
+      placeholder="Search..."
+      value={value}
+      onChange={(e) => onChange(e.currentTarget.value)}
+    />
+  );
+};
+
+export default SearchBox;
+```
+
+```javascript
+// src/components/Movies.jsx
+import { Component } from "react";
+import { getMovies } from "../services/fakeMovieService";
+import { getGenres } from "../services/fakeGenreService";
+import ListGroup from "./common/ListGroupComp";
+import PaginationComp from "./common/PaginationComp";
+import { paginate } from "../utils/paginate";
+import { Link } from "react-router-dom";
+import MoviesTable from "./MoviesTable";
+import SearchBox from "./common/SearchBox";
+import _ from "lodash";
+
+class Movies extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      movies: [],
+      genres: [],
+      pageSize: 4,
+      currentPage: 1,
+      selectedGenre: "",
+      searchQuery: "",
+      sortColumn: { path: "title", order: "asc" },
+    };
+  }
+
+  componentDidMount() {
+    const genres = [{ _id: "", name: "All Genres" }, ...getGenres()];
+    this.setState({ movies: getMovies(), genres, selectedGenre: genres[0] });
+  }
+
+  handleLike = (movie) => {
+    // console.log("Like");
+    const movies = [...this.state.movies];
+    const index = movies.indexOf(movie);
+    movies[index] = { ...movies[index] };
+    movies[index].liked = !movies[index].liked;
+
+    this.setState({ movies });
+  };
+
+  handleDelete = (movie) => {
+    // console.log(movie);
+    const movies = this.state.movies.filter((m) => m._id !== movie._id);
+    this.setState({ movies });
+  };
+
+  handlePageChange = (page) => {
+    // console.log(page);
+    this.setState({ currentPage: page });
+  };
+
+  handleGenreSelect = (genre) => {
+    // console.log(genre);
+    this.setState({ selectedGenre: genre, currentPage: 1 });
+  };
+
+  handleSort = (sortColumn) => {
+    // console.log(path)
+    this.setState({ sortColumn });
+  };
+
+  handleSearch = (query) => {
+    this.setState({ searchQuery: query, selectedGenre: null, currentPage: 1 });
+  };
+
+  getPagedData = () => {
+    const {
+      selectedGenre,
+      pageSize,
+      sortColumn,
+      currentPage,
+      movies: allMovies,
+      searchQuery,
+    } = this.state;
+
+    // 검색 로직
+    let filtered = allMovies;
+    if (searchQuery)
+      filtered = allMovies.filter((m) =>
+        m.title.toLowerCase().startsWith(searchQuery.toLowerCase())
+      );
+    else if (selectedGenre && selectedGenre._id)
+      filtered = allMovies.filter((m) => m.genre._id === selectedGenre._id);
+
+    const sorted = _.orderBy(filtered, [sortColumn.path], [sortColumn.order]);
+
+    const movies = paginate(sorted, currentPage, pageSize);
+
+    return { totalCount: filtered.length, data: movies };
+  };
+
+  render() {
+    const { length: count } = this.state.movies;
+    const {
+      pageSize,
+      currentPage,
+      selectedGenre,
+      genres,
+      sortColumn,
+      searchQuery,
+    } = this.state;
+
+    if (count === 0)
+      return <p>모든 영화가 삭제되었습니다 (영화가 존재하지 않습니다).</p>;
+
+    const { totalCount, data: movies } = this.getPagedData();
+
+    return (
+      <div className="container mt-2">
+        <div className="row">
+          <div className="col-2">
+            <ListGroup
+              items={genres}
+              selectedItem={selectedGenre}
+              onItemSelect={this.handleGenreSelect}
+            />
+          </div>
+          <div className="col">
+            <Link
+              className="btn btn-primary"
+              to="/movies/new"
+              style={{ marginBottom: "20px" }}
+            >
+              New Movie
+            </Link>
+            <p>현재 {totalCount}개 영화가 존재합니다.</p>
+            <SearchBox value={searchQuery} onChange={this.handleSearch} />
+            <MoviesTable
+              movies={movies}
+              onLike={this.handleLike}
+              onDelete={this.handleDelete}
+              onSort={this.handleSort}
+              sortColumn={sortColumn}
+            />
+            <PaginationComp
+              itemsCount={totalCount}
+              pageSize={pageSize}
+              currentPage={currentPage}
+              onPageChange={this.handlePageChange}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default Movies;
+```

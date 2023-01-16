@@ -1,4 +1,5 @@
 # React Components
+
 ```html
 <!DOCTYPE html>
 <html>
@@ -14,13 +15,18 @@
 
     <script
       crossorigin
-      src="https://unpkg.com/react@16/umd/react.production.min.js"
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
     ></script>
     <script
       crossorigin
-      src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
     ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"
+      integrity="sha512-kp7YHLxuJDJcOzStgd6vtpxr4ZU9kjn77e6dBsivSz+pUuAuMlE2UTdKB7jjsWT84qbS8kdCWHPETnP/ctrFsA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
   </head>
   <body>
     <div id="root"></div>
@@ -41,7 +47,7 @@
           <div className="col s2">
             <div className="card hoverable small">
               <div className="card-image">
-                <img src="http://lorempixel.com/400/400/nature/" />
+                <img src="https://www.santarosaforward.com/img/managed/Image/111/file.jpg" />
               </div>
               <div className="card-content">
                 <p>{data.title}</p>
@@ -55,40 +61,39 @@
         </div>
       );
 
-      console.log(markup);
+      const container = document.getElementById("root");
+      const root = ReactDOM.createRoot(container);
 
-      // takes 2 args:
-      // 1. what - a react element
-      // 2. where
-      ReactDOM.render(markup, document.getElementById("root"));
+      root.render(<markup />);
     </script>
   </body>
 </html>
 ```
 
 다음 코드를 더욱 `react`스럽게 변환해 보겠습니다.
+
 ```javascript
 // Card.js
 function Card() {
-    return (
-        <div className="row">
-            <div className="col s2">
-            <div className="card hoverable small">
-                <div className="card-image">
-                <img src="http://lorempixel.com/400/400/nature/" />
-                </div>
-                <div className="card-content">
-                <p>{data.title}</p>
-                <p>{data.author}</p>
-                </div>
-                <div className="card-action">
-                <a href="#">${saleOn() ? 9.99 : 59.99}</a>
-                </div>
-            </div>
-            </div>
+  return (
+    <div className="row">
+      <div className="col s2">
+        <div className="card hoverable small">
+          <div className="card-image">
+            <img src="https://www.santarosaforward.com/img/managed/Image/111/file.jpg" />
+          </div>
+          <div className="card-content">
+            <p>{data.title}</p>
+            <p>{data.author}</p>
+          </div>
+          <div className="card-action">
+            <a href="#">${saleOn() ? 9.99 : 59.99}</a>
+          </div>
         </div>
-    );
-} 
+      </div>
+    </div>
+  );
+}
 ```
 
 ```html
@@ -106,33 +111,38 @@ function Card() {
 
     <script
       crossorigin
-      src="https://unpkg.com/react@16/umd/react.production.min.js"
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
     ></script>
     <script
       crossorigin
-      src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
     ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"
+      integrity="sha512-kp7YHLxuJDJcOzStgd6vtpxr4ZU9kjn77e6dBsivSz+pUuAuMlE2UTdKB7jjsWT84qbS8kdCWHPETnP/ctrFsA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script src="./Card.js" type="text/babel"></script>
   </head>
   <body>
     <div id="root"></div>
 
     <script type="text/babel">
-      // takes 2 args:
-      // 1. what - a react element
-      // 2. where
+      const container = document.getElementById("root");
+      const root = ReactDOM.createRoot(container);
 
-      ReactDOM.render(
-        <Card />,
-        document.getElementById("root")
+      root.render(
+        <Card
+          title="React From the Beginning"
+          name="Yongsu Jeong"
+          price="19.90"
+        />
       );
     </script>
   </body>
 </html>
 ```
-`react`에서는 `jsx`를 리턴하는 함수를 호출할 때 ``와 같은 방식으로 호출할 수 있다. 주의할 점은 `jsx` 리턴하는 경우 `HTML`과 구분하기 위해 첫 번째 글자는 대문자로 정의해야 한다. <br />
+
+`react`에서는 `jsx`를 리턴하는 함수를 호출할 때 ``와 같은 방식으로 호출할 수 있다. 주의할 점은 `jsx`리턴하는 경우`HTML`과 구분하기 위해 첫 번째 글자는 대문자로 정의해야 한다. <br />
 `jsx`를 리턴하는 하는 함수를 보고 `component`라 칭한다.
-
-
-

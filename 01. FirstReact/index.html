@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+
     <script
       crossorigin
       src="https://unpkg.com/react@18/umd/react.production.min.js"
@@ -24,7 +25,10 @@
     <div id="root"></div>
 
     <script type="text/babel">
-      ReactDOM.render(<h1>Sanity Check</h1>, document.getElementById("root"));
+      const container = document.getElementById("root");
+      const root = ReactDOM.createRoot(container);
+      const SanityComp = <h1>Sanity Check</h1>;
+      root.render(<SanityComp />);
     </script>
   </body>
 </html>
