@@ -1,0 +1,47 @@
+{
+  "name": "yongsu-express-study-repo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jos50275266/yongsu-express-study-repo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jos50275266/yongsu-express-study-repo/issues"
+  },
+  "homepage": "https://github.com/jos50275266/yongsu-express-study-repo#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "bcrypt": "^5.1.0",
+    "config": "^3.3.8",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "debug": "^4.3.4",
+    "dotenv": "^16.0.3",
+    "ejs": "^3.1.8",
+    "express": "^4.18.1",
+    "express-async-errors": "^3.1.1",
+    "fawn": "^2.1.5",
+    "helmet": "^5.1.1",
+    "http-errors": "^2.0.0",
+    "joi": "^17.7.0",
+    "joi-objectid": "^4.0.2",
+    "jsonwebtoken": "^9.0.0",
+    "lodash": "^4.17.21",
+    "method-override": "^3.0.0",
+    "moment": "^2.29.4",
+    "mongoose": "^6.8.2",
+    "morgan": "^1.10.0",
+    "pug": "^3.0.2",
+    "uuid": "^8.3.2",
+    "winston": "^3.8.2",
+    "winston-mongodb": "^5.1.0"
+  }
+}

@@ -522,7 +522,7 @@ export default App;
 
 이번에는 `catch` 구문의 `else` 문에 있는 로직을 `interceptor`로 옮겨보겠습니다.
 
-Testcase
+`Testcase`
 
 1. expected error:
 
