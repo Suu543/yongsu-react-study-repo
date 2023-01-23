@@ -1115,3 +1115,15 @@ class MoviesTable extends Component {
 
 export default MoviesTable;
 ```
+
+## Summary
+
+1. `axios.defaults.headers.common["x-auth-token"]`를 활용해 서버에 `HTTP Request Header`에 요청 전달하는 방법을 학습했습니다.
+2. `jwt`를 활용해 로그인된 사용자는 로그인, 회원가입 페이지 접근 시 홈페이지로 리다이렉트 하는 로직을 학습했습니다.
+3. `location.state`를 활용해 로그인하지 않은 상태에서 로그인이 필요한 페이지에 접근했을 때, 해당 페이지를 `state`라는 객체에 기록해두고, 로그인 페이지로 리다이렉트 시키고, 로그인 성공 시 해당 페이지로 이동시키는 로직을 학습했습니다.
+4. `Protected Route`를 통해 권한이 있는 사람만 특정 페이지에 접근할 수 있도록 구현 로직을 학습했습니다.
+5. `Bi-directional(상호의존)` 관계에 있는 모듈의 의존성을 한 방향으로만 흐르게 하는 로직을 학습했습니다.
+
+- `react-router-dom` 기술을 심도 있게 학습하면, 더욱 견고한 프론트엔드 로직을 작성할 수 있습니다.
+- (왜 x-auth-token을 사용하는지 node.js 강의로 알아보기)
+- https://www.inflearn.com/questions/178947/auth-js-gt-line-6-quot-x-auth-token-quot-%EA%B4%80%EB%A0%A8-%EC%A7%88%EB%AC%B8
