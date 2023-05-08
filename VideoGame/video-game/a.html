@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .extrinsic {
+        width: 100px;
+        border: 2px solid black;
+        font-size: 40px;
+      }
+
+      .intrinsic {
+        width: min-content;
+        border: 2px solid gold;
+        font-size: 40px;
+      }
+
+      .intrinsic-max-content {
+        width: max-content;
+        border: 2px solid orange;
+        font-size: 40px;
+      }
+    </style>
+    <!-- extrinsic: 내가 정의한 크기 -->
+    <!-- intrinsic: 브라우저가 정의한 크기: 알아서 맞춰줌 -->
+  </head>
+  <body>
+    <div class="extrinsic">CSS IS AWESOME</div>
+    <div class="intrinsic">CSS IS AWESOME</div>
+    <div class="intrinsic-max-content">CSS IS AWESOME</div>
+  </body>
+</html>
