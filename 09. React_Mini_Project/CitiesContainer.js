@@ -11,7 +11,7 @@ class CitiesContainer extends React.Component {
 
     const cities = this.props.data.map((city, i) => {
       const image = "https://loremflickr.com/400/300";
-      return <Cite key={i} city={city} image={image} />;
+      return <City key={i} city={city} image={image} />;
     });
 
     return (
