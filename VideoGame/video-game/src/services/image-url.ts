@@ -3,8 +3,10 @@
 // 다음과 같이 crop을 추가해 이미지 사이즈를 줄여서, 성능을 개선할 수 있습니다.
 // https://media.rawg.io/media/crop/600/400/games/d58/d588947d4286e7b5e0e12e1bea7d9844.jpg
 
+import noImage from "../assets/no-image-placeholder-6f3882e0.webp";
+
 const getCroppedImageUrl = (url: string) => {
-  if (!url) return "";
+  if (!url) return noImage;
   const target = "media/";
   // url.indexOf(target)은 media/ 글자의 시작점이기 때문에 뒤에 + target.length를 해줌
   const index = url.indexOf(target) + target.length;
