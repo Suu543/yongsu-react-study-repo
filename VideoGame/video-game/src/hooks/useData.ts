@@ -20,6 +20,7 @@ const useData = <T>(
     () => {
       const controller = new AbortController();
 
+      // setData([]); 이게 해결책일까?
       setLoading(true);
       apiClient
         .get<FetchResponse<T>>(endpoint, {
