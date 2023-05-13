@@ -4,6 +4,7 @@
 // https://media.rawg.io/media/crop/600/400/games/d58/d588947d4286e7b5e0e12e1bea7d9844.jpg
 
 const getCroppedImageUrl = (url: string) => {
+  if (!url) return "";
   const target = "media/";
   // url.indexOf(target)은 media/ 글자의 시작점이기 때문에 뒤에 + target.length를 해줌
   const index = url.indexOf(target) + target.length;
