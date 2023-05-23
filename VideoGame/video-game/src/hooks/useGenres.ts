@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import apiClient from "../services/api-client";
-import { CanceledError } from "axios";
-// import useData from "./useData";
+// import { useState, useEffect } from "react";
+// import apiClient from "../services/api-client";
+// import { CanceledError } from "axios";
 import genres from "../data/genres";
 
 export interface Genre {
@@ -14,36 +13,36 @@ export interface Genre {
 const useGenres = () => ({ data: genres, isLoading: false, error: null });
 
 // ----------------------------
-interface FetchGenresResponse {
-  count: number;
-  results: Genre[];
-}
+// interface FetchGenresResponse {
+//   count: number;
+//   results: Genre[];
+// }
 
-const useGenresBefore = () => {
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [error, setError] = useState("");
-  const [isLoading, setLoading] = useState(false);
+// const useGenresBefore = () => {
+//   const [genres, setGenres] = useState<Genre[]>([]);
+//   const [error, setError] = useState("");
+//   const [isLoading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
+//   useEffect(() => {
+//     const controller = new AbortController();
 
-    setLoading(true);
-    apiClient
-      .get<FetchGenresResponse>("/genres", { signal: controller.signal })
-      .then((res) => {
-        setGenres(res.data.results);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err instanceof CanceledError) return;
-        setError(err.message);
-        setLoading(false);
-      });
+//     setLoading(true);
+//     apiClient
+//       .get<FetchGenresResponse>("/genres", { signal: controller.signal })
+//       .then((res) => {
+//         setGenres(res.data.results);
+//         setLoading(false);
+//       })
+//       .catch((err) => {
+//         if (err instanceof CanceledError) return;
+//         setError(err.message);
+//         setLoading(false);
+//       });
 
-    return () => controller.abort();
-  }, []);
+//     return () => controller.abort();
+//   }, []);
 
-  return { genres, error, isLoading };
-};
+//   return { genres, error, isLoading };
+// };
 
 export default useGenres;
