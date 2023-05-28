@@ -6,12 +6,11 @@ interface Props {
 
 const GameTrailer = ({ gameId }: Props) => {
   const { data, error, isLoading } = useTrailers(gameId);
-  //   console.log(data);
 
   if (isLoading) return null;
+
   if (error) throw error;
 
-  // There are multiples trailers. I just pick one of them
   const first = data?.results[0];
   return first ? (
     <video src={first.data[480]} poster={first.preview} controls />
