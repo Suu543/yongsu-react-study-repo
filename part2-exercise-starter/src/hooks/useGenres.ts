@@ -3,7 +3,7 @@ import genres from "../data/genres";
 import { CACHE_KEY_GENRES } from "../constants";
 import APIClient from "../services/api-client";
 import ms from "ms";
-import { Genre } from "../entities/Genre";
+import Genre from "../entities/Genre";
 
 const apiClient = new APIClient<Genre>("/genres");
 
