@@ -1,14 +1,16 @@
-import { SimpleGrid, Image } from "@chakra-ui/react";
+import { Image, SimpleGrid } from "@chakra-ui/react";
+import React from "react";
 import useScreenshots from "../hooks/useScreenshots";
 
 interface Props {
   gameId: number;
 }
 
-export const GameScreenshots = ({ gameId }: Props) => {
+const GameScreenshots = ({ gameId }: Props) => {
   const { data, isLoading, error } = useScreenshots(gameId);
 
   if (isLoading) return null;
+
   if (error) throw error;
 
   return (
@@ -19,3 +21,5 @@ export const GameScreenshots = ({ gameId }: Props) => {
     </SimpleGrid>
   );
 };
+
+export default GameScreenshots;
